@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: cineverse-backend
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cineverse}
+    username: ${DB_USER:cineverse}
+    password: ${DB_PASSWORD:cineverse}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+cineverse:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-use-long-random-string-in-production-min-256-bits}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  cors-allowed-origins:
+    - ${CORS_ORIGIN_1:http://localhost:5173}
+    - ${CORS_ORIGIN_2:http://localhost:80}
+    - ${CORS_ORIGIN_3:http://localhost}
+  cache:
+    ttl-seconds: ${CACHE_TTL_SECONDS:120}
+  seat-lock-ttl-seconds: ${SEAT_LOCK_TTL_SECONDS:600}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    org.springframework.security: INFO
