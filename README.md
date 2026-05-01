@@ -1,6 +1,13 @@
 # CineVerse
 
-Simple fullstack cinema app.
+Fullstack cinema web application with movie catalog, schedule, seat booking flow, user auth, and admin management.
+
+## Tech Stack
+
+- Frontend: React, TypeScript, Vite, Tailwind, React Query, Zustand
+- Backend: Java 25, Spring Boot, Spring Security, JWT, JPA, Flyway
+- Data: PostgreSQL, Redis
+- Infra: Docker Compose
 
 ## Requirements
 
@@ -39,3 +46,9 @@ docker compose up --build -d
 
 - Email: `admin@cineverse.local`
 - Password: `password`
+
+## Quick Health Checks
+
+- Backend health/docs: open `http://localhost:8080/swagger-ui.html`
+- Movies API: `http://localhost:8080/api/movies`
+- Prices API: `http://localhost:8080/api/prices`
