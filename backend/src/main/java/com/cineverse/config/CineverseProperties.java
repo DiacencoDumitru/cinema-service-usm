@@ -4,6 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @ConfigurationProperties(prefix = "cineverse")
 public class CineverseProperties {
@@ -17,7 +19,18 @@ public class CineverseProperties {
     }
 
     public void setCorsAllowedOrigins(List<String> corsAllowedOrigins) {
-        this.corsAllowedOrigins = corsAllowedOrigins;
+        if (corsAllowedOrigins == null) {
+            this.corsAllowedOrigins = new ArrayList<>(List.of("http://localhost:5173"));
+            return;
+        }
+        List<String> cleaned = corsAllowedOrigins.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toCollection(ArrayList::new));
+        this.corsAllowedOrigins = cleaned.isEmpty()
+                ? new ArrayList<>(List.of("http://localhost:5173"))
+                : cleaned;
     }
 
     public long getCacheTtlSeconds() {

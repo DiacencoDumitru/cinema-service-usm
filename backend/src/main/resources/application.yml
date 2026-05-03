@@ -32,6 +32,13 @@ cineverse:
     - ${CORS_ORIGIN_1:http://localhost:5173}
     - ${CORS_ORIGIN_2:http://localhost:80}
     - ${CORS_ORIGIN_3:http://localhost}
+    - ${CORS_ORIGIN_4:http://127.0.0.1}
+    - ${CORS_ORIGIN_5:http://127.0.0.1:80}
+    - ${CORS_ORIGIN_6:http://127.0.0.1:5173}
+    - ${CORS_ORIGIN_7:}
+    - ${CORS_ORIGIN_8:}
+    - ${CORS_ORIGIN_9:}
+    - ${CORS_ORIGIN_10:}
   cache:
     ttl-seconds: ${CACHE_TTL_SECONDS:120}
   seat-lock-ttl-seconds: ${SEAT_LOCK_TTL_SECONDS:600}

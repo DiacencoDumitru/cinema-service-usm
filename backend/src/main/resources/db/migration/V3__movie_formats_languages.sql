@@ -73,7 +73,3 @@ UPDATE movies
 SET formats = ARRAY ['2D'],
     languages = ARRAY ['EN']
 WHERE title = 'Iron Maiden: Burning Ambition';
-
-UPDATE movies
-SET trailer_url = 'https://www.youtube.com/watch?v=s1-pfiVMKAs'
-WHERE title = 'Supergirl';
