@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
@@ -8,67 +7,8 @@ import { VideoStage } from '../components/VideoStage';
 import { sortNowShowingMovies } from '../utils/nowShowingOrder';
 
 async function fetchMovies(status: string) {
-  // #region agent log
-  fetch('http://127.0.0.1:7557/ingest/cd9f4e16-5bb6-4cfe-a86a-9fd6a451d7bc', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '087bca' },
-    body: JSON.stringify({
-      sessionId: '087bca',
-      hypothesisId: 'H1-H3',
-      location: 'Home.tsx:fetchMovies:start',
-      message: 'movies fetch start',
-      data: {
-        statusParam: status,
-        viteApiUrl: (import.meta.env.VITE_API_URL as string | undefined) ?? '',
-        pageOrigin: typeof window !== 'undefined' ? window.location.origin : '',
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-  try {
-    const { data } = await api.get<CursorPage<Movie>>(`/api/movies`, { params: { status, limit: 12 } });
-    // #region agent log
-    fetch('http://127.0.0.1:7557/ingest/cd9f4e16-5bb6-4cfe-a86a-9fd6a451d7bc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '087bca' },
-      body: JSON.stringify({
-        sessionId: '087bca',
-        hypothesisId: 'H2-H5',
-        location: 'Home.tsx:fetchMovies:ok',
-        message: 'movies fetch ok',
-        data: {
-          statusParam: status,
-          itemCount: Array.isArray(data?.items) ? data.items.length : -1,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-    return data;
-  } catch (e: unknown) {
-    const err = e as { message?: string; code?: string; response?: { status?: number } };
-    // #region agent log
-    fetch('http://127.0.0.1:7557/ingest/cd9f4e16-5bb6-4cfe-a86a-9fd6a451d7bc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '087bca' },
-      body: JSON.stringify({
-        sessionId: '087bca',
-        hypothesisId: 'H2-H5',
-        location: 'Home.tsx:fetchMovies:err',
-        message: 'movies fetch error',
-        data: {
-          statusParam: status,
-          errMessage: err?.message ?? String(e),
-          errCode: err?.code,
-          httpStatus: err?.response?.status,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-    throw e;
-  }
+  const { data } = await api.get<CursorPage<Movie>>(`/api/movies`, { params: { status, limit: 12 } });
+  return data;
 }
 
 function FetchBanner({ tone, children }: { tone: 'load' | 'err'; children: React.ReactNode }) {
@@ -100,28 +40,6 @@ export function Home() {
   const nowOrdered = sortNowShowingMovies(now.data?.items ?? []);
   const nowReady = !now.isPending && !now.isError;
   const soonReady = !soon.isPending && !soon.isError;
-
-  useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7557/ingest/cd9f4e16-5bb6-4cfe-a86a-9fd6a451d7bc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '087bca' },
-      body: JSON.stringify({
-        sessionId: '087bca',
-        hypothesisId: 'H4',
-        location: 'Home.tsx:useEffect:rq-state',
-        message: 'react-query snapshot',
-        data: {
-          nowStatus: now.status,
-          nowFetchStatus: now.fetchStatus,
-          soonStatus: soon.status,
-          soonFetchStatus: soon.fetchStatus,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, [now.status, now.fetchStatus, soon.status, soon.fetchStatus]);
 
   return (
     <div className="space-y-12">
