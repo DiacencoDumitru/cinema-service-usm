@@ -10,6 +10,15 @@ export default {
           muted: '#64748b',
         },
       },
+      keyframes: {
+        schedulePanelIn: {
+          '0%': { opacity: '0', transform: 'translateX(10px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+      },
+      animation: {
+        'schedule-panel-in': 'schedulePanelIn 0.22s ease-out both',
+      },
     },
   },
   plugins: [],
