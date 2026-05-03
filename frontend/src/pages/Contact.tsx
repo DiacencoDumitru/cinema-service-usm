@@ -5,7 +5,7 @@ export function Contact() {
         <h1 className="mb-4 text-3xl font-bold">Contact</h1>
         <p className="mb-2">Adresă: bd. Ștefan cel Mare și Sfânt 132, Chișinău</p>
         <p className="mb-2">Telefon: +373 22 000 000</p>
-        <p className="mb-2">Email: contact@cineverse.local</p>
+        <p className="mb-2">Email: contact@auroracinema.local</p>
         <p>Casa bilete: zilnic 10:00 – 23:30</p>
       </div>
       <div className="aspect-video overflow-hidden rounded-xl border border-slate-800">

@@ -1,4 +1,4 @@
-# CineVerse
+# Aurora Cinema
 
 Fullstack cinema web application with movie catalog, schedule, seat booking flow, user auth, and admin management.
 
