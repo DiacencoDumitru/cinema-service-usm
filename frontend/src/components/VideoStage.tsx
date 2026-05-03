@@ -1,16 +1,49 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Movie } from '../types';
 import { youtubeVideoIdFromUrl } from '../utils/youtube';
 
-const TRAILER_ROTATE_MS = 28_000;
-
-function embedSrc(videoId: string) {
-  return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?mute=1&autoplay=1&controls=1&rel=0&playsinline=1`;
-}
+const TRAILER_MAX_PLAY_MS = 60_000;
 
 type Props = {
   movies: Movie[];
 };
+
+type YTPlayer = {
+  destroy: () => void;
+  loadVideoById: (opts: { videoId: string }) => void;
+  playVideo: () => void;
+  pauseVideo: () => void;
+};
+
+declare global {
+  interface Window {
+    YT?: {
+      Player: new (el: HTMLElement, opts: Record<string, unknown>) => YTPlayer;
+      PlayerState: { ENDED: number };
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+let iframeApiPromise: Promise<void> | null = null;
+
+function loadYoutubeIframeApi(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.YT?.Player) return Promise.resolve();
+  if (iframeApiPromise) return iframeApiPromise;
+  iframeApiPromise = new Promise<void>((resolve) => {
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      prev?.();
+      resolve();
+    };
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  });
+  return iframeApiPromise;
+}
 
 export function VideoStage({ movies }: Props) {
   const withTrailers = useMemo(
@@ -18,14 +51,28 @@ export function VideoStage({ movies }: Props) {
     [movies],
   );
 
+  const videoIds = useMemo(
+    () => withTrailers.map((m) => youtubeVideoIdFromUrl(m.trailerUrl)!),
+    [withTrailers],
+  );
+
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
+  const countRef = useRef(0);
+  countRef.current = videoIds.length;
 
   const n = withTrailers.length;
 
   useEffect(() => {
-    setIndex((i) => Math.min(i, Math.max(0, n - 1)));
-  }, [n]);
+    if (videoIds.length === 0) {
+      setIndex(0);
+      return;
+    }
+    setIndex((i) => Math.min(i, videoIds.length - 1));
+  }, [videoIds.length]);
 
   const advance = useCallback(() => {
     if (n <= 1) return;
@@ -37,18 +84,89 @@ export function VideoStage({ movies }: Props) {
     setIndex((i) => (i - 1 + n) % n);
   }, [n]);
 
-  const goTo = useCallback((i: number) => {
-    if (n <= 0) return;
-    setIndex(((i % n) + n) % n);
-  }, [n]);
+  const goTo = useCallback(
+    (i: number) => {
+      if (n <= 0) return;
+      setIndex(((i % n) + n) % n);
+    },
+    [n],
+  );
+
+  const videoIdsKey = videoIds.join(',');
 
   useEffect(() => {
-    if (n <= 1 || paused) return;
-    const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % n);
-    }, TRAILER_ROTATE_MS);
-    return () => window.clearInterval(id);
-  }, [n, paused, index]);
+    if (videoIds.length === 0 || !containerRef.current) return;
+
+    let cancelled = false;
+    setPlayerReady(false);
+
+    void loadYoutubeIframeApi().then(() => {
+      if (cancelled || !containerRef.current || !window.YT?.Player) return;
+
+      playerRef.current?.destroy();
+      playerRef.current = null;
+
+      const startId = videoIds[0];
+      if (!startId) return;
+
+      const player = new window.YT.Player(containerRef.current, {
+        videoId: startId,
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 1,
+          rel: 0,
+          playsinline: 1,
+        },
+        events: {
+          onReady: () => {
+            if (!cancelled) {
+              setPlayerReady(true);
+              player.playVideo();
+            }
+          },
+          onStateChange: (e: { data: number }) => {
+            if (e.data === 0) {
+              setIndex((i) => {
+                const c = countRef.current;
+                if (c <= 0) return 0;
+                return (i + 1) % c;
+              });
+            }
+          },
+        },
+      });
+      playerRef.current = player;
+    });
+
+    return () => {
+      cancelled = true;
+      setPlayerReady(false);
+      playerRef.current?.destroy();
+      playerRef.current = null;
+    };
+  }, [videoIdsKey]);
+
+  useEffect(() => {
+    const p = playerRef.current;
+    if (!playerReady || !p || videoIds.length === 0) return;
+    const id = videoIds[index];
+    if (!id) return;
+    p.loadVideoById({ videoId: id });
+    p.playVideo();
+  }, [index, videoIds, playerReady]);
+
+  useEffect(() => {
+    if (!playerReady || n <= 0) return;
+    const t = window.setTimeout(() => {
+      setIndex((i) => {
+        const c = countRef.current;
+        if (c <= 0) return 0;
+        return (i + 1) % c;
+      });
+    }, TRAILER_MAX_PLAY_MS);
+    return () => window.clearTimeout(t);
+  }, [index, playerReady, n, videoIdsKey]);
 
   if (movies.length === 0) {
     return null;
@@ -65,17 +183,11 @@ export function VideoStage({ movies }: Props) {
   }
 
   const current = withTrailers[index];
-  const videoId = youtubeVideoIdFromUrl(current.trailerUrl)!;
-  const src = embedSrc(videoId);
   const showArrows = n > 1;
 
   return (
     <section className="w-full" aria-label="Trailere">
-      <div
-        className="relative overflow-hidden rounded-xl border border-slate-800 bg-black shadow-lg"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
+      <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-black shadow-lg">
         {showArrows && (
           <>
             <button
@@ -98,14 +210,10 @@ export function VideoStage({ movies }: Props) {
         )}
 
         <div className="relative aspect-video w-full">
-          <iframe
-            key={`${current.id}-${index}`}
+          <div
+            ref={containerRef}
+            className="absolute inset-0 h-full w-full [&_iframe]:absolute [&_iframe]:inset-0 [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:border-0"
             title={`Trailer: ${current.title}`}
-            src={src}
-            className="absolute inset-0 h-full w-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
           />
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pb-4 pt-16"
