@@ -15,7 +15,7 @@ public class OpenApiConfig {
     public OpenAPI openApi() {
         final String schemeName = "bearerAuth";
         return new OpenAPI()
-                .info(new Info().title("CineVerse API").version("v1"))
+                .info(new Info().title("Aurora Cinema API").version("v1"))
                 .addSecurityItem(new SecurityRequirement().addList(schemeName))
                 .components(new Components().addSecuritySchemes(schemeName,
                         new SecurityScheme()
