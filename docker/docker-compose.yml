@@ -35,6 +35,9 @@ services:
       CORS_ORIGIN_1: http://localhost
       CORS_ORIGIN_2: http://localhost:80
       CORS_ORIGIN_3: http://localhost:5173
+      CORS_ORIGIN_4: http://127.0.0.1
+      CORS_ORIGIN_5: http://127.0.0.1:80
+      CORS_ORIGIN_6: http://127.0.0.1:5173
     ports:
       - "8080:8080"
 
