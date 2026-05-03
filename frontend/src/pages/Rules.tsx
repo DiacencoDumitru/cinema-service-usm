@@ -3,7 +3,7 @@ export function Rules() {
     <article className="prose prose-invert max-w-none">
       <h1 className="text-3xl font-bold text-white">Regulament</h1>
       <p className="lead text-slate-300">
-        Prezentul regulament stabilește condițiile de acces și de desfășurare a vizionărilor la CineVerse Chișinău. Prin
+        Prezentul regulament stabilește condițiile de acces și de desfășurare a vizionărilor la Aurora Cinema Chișinău. Prin
         achiziționarea biletului sau prin accesul în incinta cinematografului, vizitatorii confirmă că au luat
         cunoștință de aceste reguli și le acceptă.
       </p>
@@ -84,14 +84,14 @@ export function Rules() {
 
       <h2 className="mt-8 text-xl font-semibold text-white">7. Forță majoră și modificări de program</h2>
       <p className="text-slate-300">
-        CineVerse își rezervă dreptul de a modifica programul, de a înlocui filmele sau de a anula seanse din motive
+        Aurora Cinema își rezervă dreptul de a modifica programul, de a înlocui filmele sau de a anula seanse din motive
         tehnice, legale sau de forță majoră. În aceste situații vor fi comunicate soluții rezonabile spectatorilor
         afectați (reprogramare, rambursare etc.), conform condițiilor afișate la momentul achiziției.
       </p>
 
       <p className="mt-8 text-sm text-slate-500">
         Ultima actualizare: informațiile pot fi completate la casă sau pe site. În caz de divergență între versiuni,
-        prevală documentele oficiale comunicate de CineVerse Chișinău.
+        prevală documentele oficiale comunicate de Aurora Cinema Chișinău.
       </p>
     </article>
   );

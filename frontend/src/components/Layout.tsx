@@ -4,6 +4,9 @@ import { useAuthStore } from '../stores/authStore';
 import { CineVerseMark } from './CineVerseMark';
 import { SocialIcons } from './SocialIcons';
 
+const brandWordmarkClass =
+  'inline-block bg-clip-text font-extrabold tracking-tight text-transparent transition-opacity hover:opacity-90 bg-[linear-gradient(127deg,#065f46_0%,#10b981_16%,#2dd4bf_32%,#38bdf8_48%,#818cf8_66%,#c026d3_82%,#f9a8d4_100%)]';
+
 function navClass({ isActive }: { isActive: boolean }) {
   return [
     'relative pb-2 text-sm font-semibold uppercase tracking-wide transition-colors',
@@ -27,12 +30,9 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-slate-800 bg-slate-950 font-sans antialiased">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3 lg:px-8">
-          <Link
-            to="/"
-            className="flex shrink-0 items-center gap-3 text-2xl font-bold tracking-tight text-rose-400"
-          >
+          <Link to="/" className="flex shrink-0 items-center gap-3 text-2xl font-sans">
             <CineVerseMark size={48} className="shrink-0" />
-            CineVerse
+            <span className={brandWordmarkClass}>Aurora Cinema</span>
           </Link>
 
           <div className="flex flex-1 flex-wrap items-center justify-end gap-4 lg:gap-6">
@@ -117,15 +117,15 @@ export function Layout() {
       <footer className="border-t border-slate-800 bg-slate-950 py-10 font-sans antialiased text-sm text-slate-400">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-12 lg:gap-8 lg:px-8">
           <div className="space-y-4 lg:col-span-4">
-            <Link to="/" className="flex items-center gap-3 text-xl font-bold text-rose-400">
+            <Link to="/" className="flex items-center gap-3 text-xl font-sans">
               <CineVerseMark size={48} className="shrink-0" />
-              CineVerse
+              <span className={brandWordmarkClass}>Aurora Cinema</span>
             </Link>
-            <p className="font-medium text-slate-200">CineVerse S.R.L.</p>
+            <p className="font-medium text-slate-200">Aurora Cinema S.R.L.</p>
             <div className="space-y-1">
               <p>bd. Ștefan cel Mare și Sfânt 132</p>
               <p>Tel: +373 22 000 000</p>
-              <p>contact@cineverse.local</p>
+              <p>contact@auroracinema.local</p>
             </div>
             <p className="text-xs text-slate-500">© 2026 Toate drepturile rezervate.</p>
             <SocialIcons variant="dark" />
