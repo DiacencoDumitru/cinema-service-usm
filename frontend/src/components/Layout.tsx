@@ -1,6 +1,7 @@
 import { Link, Outlet } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuthStore } from '../stores/authStore';
+import { CineVerseMark } from './CineVerseMark';
 
 export function Layout() {
   const { token, role, email, logout } = useAuthStore();
@@ -17,7 +18,8 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link to="/" className="text-xl font-bold tracking-tight text-rose-500">
+          <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-rose-500">
+            <CineVerseMark size={32} className="shrink-0" />
             CineVerse
           </Link>
           <nav className="flex flex-wrap items-center gap-3 text-sm">
