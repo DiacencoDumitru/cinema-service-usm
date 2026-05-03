@@ -30,10 +30,7 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-slate-800 bg-slate-950 font-sans antialiased">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3 lg:px-8">
-          <Link
-            to="/"
-            className="flex shrink-0 items-center gap-3 text-2xl font-sans"
-          >
+          <Link to="/" className="flex shrink-0 items-center gap-3 text-2xl font-sans">
             <CineVerseMark size={48} className="shrink-0" />
             <span className={brandWordmarkClass}>Aurora Cinema</span>
           </Link>
