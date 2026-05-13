@@ -44,6 +44,7 @@ public class BookingService {
     private final PriceRuleRepository priceRuleRepository;
     private final UserRepository userRepository;
     private final CineverseProperties cineverseProperties;
+    private final BirthdayDiscountService birthdayDiscountService;
 
     public BookingService(BookingRepository bookingRepository,
                           BookingSeatRepository bookingSeatRepository,
@@ -52,7 +53,8 @@ public class BookingService {
                           SeatLockService seatLockService,
                           PriceRuleRepository priceRuleRepository,
                           UserRepository userRepository,
-                          CineverseProperties cineverseProperties) {
+                          CineverseProperties cineverseProperties,
+                          BirthdayDiscountService birthdayDiscountService) {
         this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
         this.screeningRepository = screeningRepository;
@@ -61,6 +63,7 @@ public class BookingService {
         this.priceRuleRepository = priceRuleRepository;
         this.userRepository = userRepository;
         this.cineverseProperties = cineverseProperties;
+        this.birthdayDiscountService = birthdayDiscountService;
     }
 
     public void lockSeats(Long userId, BookingSeatSelectionRequest request) {
@@ -93,15 +96,22 @@ public class BookingService {
             }
         }
 
+        User user = userRepository.findById(userId).orElseThrow();
+        boolean discountEligible = birthdayDiscountService.isEligible(user.getBirthDate(), screening.getStartsAt());
+        int discountPercent = discountEligible ? birthdayDiscountService.getPercent() : 0;
+
+        BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal total = BigDecimal.ZERO;
         List<BookingSeatLineResponse> lines = new ArrayList<>();
         for (Seat seat : seats) {
-            BigDecimal price = resolvePrice(screening, seat);
-            total = total.add(price);
-            lines.add(new BookingSeatLineResponse(seat.getRowNum(), seat.getColNum(), seat.getSeatType().name(), price));
+            BigDecimal base = resolvePrice(screening, seat);
+            BigDecimal applied = discountEligible ? birthdayDiscountService.apply(base) : base;
+            subtotal = subtotal.add(base);
+            total = total.add(applied);
+            lines.add(new BookingSeatLineResponse(seat.getRowNum(), seat.getColNum(), seat.getSeatType().name(), applied));
         }
+        BigDecimal discountAmount = subtotal.subtract(total);
 
-        User user = userRepository.findById(userId).orElseThrow();
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setScreening(screening);
@@ -126,6 +136,9 @@ public class BookingService {
                 screening.getMovie().getTitle(),
                 screening.getStartsAt(),
                 screening.getHall().getName(),
+                subtotal,
+                discountPercent,
+                discountAmount,
                 total,
                 lines
         );

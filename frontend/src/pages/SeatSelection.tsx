@@ -4,8 +4,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { api } from '../api/client';
-import type { PriceRow, ScreeningRow, SeatCell } from '../types';
+import type { PriceRow, Profile, ScreeningRow, SeatCell } from '../types';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
+import {
+  BIRTHDAY_DISCOUNT_PERCENT,
+  applyBirthdayDiscount,
+  isBirthdayWindow,
+} from '../utils/birthdayDiscount';
+import { useAuthStore } from '../stores/authStore';
 
 function resolveSeatPrice(seatType: string, screeningFormat: string, prices: PriceRow[], basePrice: number): number {
   const category = seatType === 'VIP' ? 'VIP' : 'STANDARD';
@@ -38,6 +44,19 @@ export function SeatSelection() {
       return data.items;
     },
   });
+
+  const token = useAuthStore((s) => s.token);
+  const profile = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const { data } = await api.get<Profile>('/api/user/profile');
+      return data;
+    },
+    enabled: Boolean(token),
+  });
+
+  const birthdayActive = isBirthdayWindow(profile.data?.birthDate, meta.data?.startsAt);
+  const priceForDisplay = (raw: number) => (birthdayActive ? applyBirthdayDiscount(raw) : raw);
 
   useEffect(() => {
     if (!meta.data) return;
@@ -114,10 +133,16 @@ export function SeatSelection() {
       <p className="text-xs text-slate-500">
         Verde / aur = liber (standard / VIP) · Gri = ocupat · Galben = blocat alt utilizator · Contur = selectat de tine
       </p>
+      {birthdayActive && (
+        <div className="inline-block rounded-full border border-emerald-600 bg-emerald-900/40 px-3 py-1 text-xs font-semibold text-emerald-100">
+          Reducere {BIRTHDAY_DISCOUNT_PERCENT}% activă — zi de naștere
+        </div>
+      )}
       {standardPrice != null && vipPrice != null && (
         <p className="text-sm text-slate-300">
-          Standard: <span className="font-semibold text-emerald-400">{standardPrice.toFixed(2)} MDL</span> · VIP:{' '}
-          <span className="font-semibold text-amber-400">{vipPrice.toFixed(2)} MDL</span> ({meta.data?.format})
+          Standard:{' '}
+          <span className="font-semibold text-emerald-400">{priceForDisplay(standardPrice).toFixed(2)} MDL</span> · VIP:{' '}
+          <span className="font-semibold text-amber-400">{priceForDisplay(vipPrice).toFixed(2)} MDL</span> ({meta.data?.format})
         </p>
       )}
       <div className="inline-block rounded-xl border border-slate-800 bg-slate-900 p-4">
@@ -130,7 +155,7 @@ export function SeatSelection() {
                 {cells.map((c) => {
                   const isSel = selectedSeats.some((s) => s.seatId === c.seatId);
                   const isVip = c.seatType === 'VIP';
-                  const unitPrice =
+                  const basePrice =
                     meta.data && prices.data
                       ? resolveSeatPrice(
                           c.seatType,
@@ -139,6 +164,7 @@ export function SeatSelection() {
                           meta.data.basePrice ? Number(meta.data.basePrice) : 0,
                         )
                       : 0;
+                  const unitPrice = priceForDisplay(basePrice);
                   let cls = 'h-9 w-9 rounded text-xs font-medium ';
                   if (c.status === 'BOOKED') cls += 'bg-slate-700 text-slate-500 cursor-not-allowed';
                   else if (c.status === 'LOCKED') cls += 'bg-amber-900/50 text-amber-200 cursor-not-allowed';
@@ -159,7 +185,7 @@ export function SeatSelection() {
                       className={cls}
                       onClick={() => {
                         if (!blocked && meta.data && prices.data) {
-                          const price = resolveSeatPrice(
+                          const raw = resolveSeatPrice(
                             c.seatType,
                             meta.data.format,
                             prices.data,
@@ -170,7 +196,8 @@ export function SeatSelection() {
                             row: c.row,
                             col: c.col,
                             seatType: c.seatType,
-                            price,
+                            price: priceForDisplay(raw),
+                            basePrice: raw,
                           });
                         }
                       }}

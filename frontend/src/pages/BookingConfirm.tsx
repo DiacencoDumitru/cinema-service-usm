@@ -2,7 +2,8 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
-import { totalSelectedPrice, useBookingDraftStore } from '../stores/bookingDraftStore';
+import { useBookingDraftStore } from '../stores/bookingDraftStore';
+import type { BookingPaid } from '../types';
 
 export function BookingConfirm() {
   const { screeningId: sid } = useParams();
@@ -11,11 +12,13 @@ export function BookingConfirm() {
   const draft = useBookingDraftStore();
   const reset = useBookingDraftStore((s) => s.reset);
   const selectedSeats = useBookingDraftStore((s) => s.selectedSeats);
-  const total = totalSelectedPrice(selectedSeats);
+  const subtotal = selectedSeats.reduce((sum, s) => sum + s.basePrice, 0);
+  const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  const discountAmount = subtotal - total;
 
   const pay = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post('/api/bookings', {
+      const { data } = await api.post<BookingPaid>('/api/bookings', {
         screeningId,
         seatIds: selectedSeats.map((s) => s.seatId),
       });
@@ -52,9 +55,19 @@ export function BookingConfirm() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-lg font-semibold text-emerald-400">
-            Total: {total.toFixed(2)} MDL
-          </p>
+          <div className="mt-3 space-y-1">
+            {discountAmount > 0 && (
+              <>
+                <p className="text-slate-300">Subtotal: {subtotal.toFixed(2)} MDL</p>
+                <p className="text-emerald-300">
+                  Reducere zi de naștere: −{discountAmount.toFixed(2)} MDL
+                </p>
+              </>
+            )}
+            <p className="text-lg font-semibold text-emerald-400">
+              Total: {total.toFixed(2)} MDL
+            </p>
+          </div>
         </div>
       </div>
       <button

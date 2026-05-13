@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
@@ -34,6 +35,9 @@ public class User {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
     public User() {
     }
@@ -92,5 +96,13 @@ public class User {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
     }
 }
