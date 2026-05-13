@@ -25,6 +25,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,7 +84,8 @@ class CineverseIntegrationTest {
                 "Test User",
                 "user_" + suffix + "@test.local",
                 "password12",
-                "password12"
+                "password12",
+                LocalDate.of(2000, 1, 15)
         );
         ResponseEntity<TokenResponse> regRes = restTemplate.postForEntity(
                 baseUrl() + "/api/auth/register",

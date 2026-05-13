@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import type { CursorPage, PriceRow } from '../types';
+import {
+  BIRTHDAY_DISCOUNT_PERCENT,
+  BIRTHDAY_DISCOUNT_WINDOW_DAYS,
+} from '../utils/birthdayDiscount';
 
 export function Pricing() {
   const q = useQuery({
@@ -14,6 +18,11 @@ export function Pricing() {
   return (
     <div>
       <h1 className="mb-6 text-3xl font-bold">Prețuri</h1>
+      <div className="mb-4 rounded-lg border border-emerald-700 bg-emerald-900/30 p-4 text-sm text-emerald-100">
+        La aniversare beneficiezi de o reducere de {BIRTHDAY_DISCOUNT_PERCENT}% la toate biletele
+        timp de ±{BIRTHDAY_DISCOUNT_WINDOW_DAYS} zile. Adaugă data nașterii în profil pentru a o
+        activa.
+      </div>
       <div className="overflow-x-auto rounded-lg border border-slate-800">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-900">

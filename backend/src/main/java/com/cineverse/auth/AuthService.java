@@ -48,6 +48,7 @@ public class AuthService {
                 passwordEncoder.encode(request.password()),
                 Role.USER
         );
+        user.setBirthDate(request.birthDate());
         userRepository.save(user);
         return new TokenResponse(jwtService.createAccessToken(user));
     }

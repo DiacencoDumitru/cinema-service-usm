@@ -42,6 +42,10 @@ cineverse:
   cache:
     ttl-seconds: ${CACHE_TTL_SECONDS:120}
   seat-lock-ttl-seconds: ${SEAT_LOCK_TTL_SECONDS:600}
+  birthday-discount:
+    percent: ${BIRTHDAY_DISCOUNT_PERCENT:30}
+    window-days: ${BIRTHDAY_DISCOUNT_WINDOW_DAYS:3}
+    timezone: ${BIRTHDAY_DISCOUNT_TIMEZONE:Europe/Chisinau}
 
 springdoc:
   api-docs:

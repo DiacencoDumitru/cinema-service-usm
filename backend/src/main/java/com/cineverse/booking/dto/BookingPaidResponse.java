@@ -9,6 +9,9 @@ public record BookingPaidResponse(
         String movieTitle,
         Instant screeningStartsAt,
         String hallName,
+        BigDecimal subtotal,
+        int discountPercent,
+        BigDecimal discountAmount,
         BigDecimal totalPrice,
         List<BookingSeatLineResponse> seats
 ) {

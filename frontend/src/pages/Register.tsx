@@ -13,6 +13,12 @@ const schema = z
     email: z.string().email(),
     password: z.string().min(8),
     confirmPassword: z.string(),
+    birthDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format așteptat: AAAA-LL-ZZ')
+      .refine((value) => new Date(value).getTime() < Date.now(), {
+        message: 'Data nașterii trebuie să fie în trecut',
+      }),
   })
   .refine((d) => d.password === d.confirmPassword, { message: 'Parolele nu coincid', path: ['confirmPassword'] });
 
@@ -30,6 +36,7 @@ export function Register() {
         email: v.email,
         password: v.password,
         confirmPassword: v.confirmPassword,
+        birthDate: v.birthDate,
       });
       const p = parseJwtPayload(data.accessToken);
       const role = (p.role === 'ADMIN' ? 'ADMIN' : 'USER') as 'USER' | 'ADMIN';
@@ -63,6 +70,19 @@ export function Register() {
           {formState.errors.confirmPassword && (
             <p className="text-xs text-red-400">{formState.errors.confirmPassword.message}</p>
           )}
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">Data nașterii</label>
+          <input
+            className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2"
+            type="date"
+            max={new Date().toISOString().slice(0, 10)}
+            {...register('birthDate')}
+          />
+          {formState.errors.birthDate && (
+            <p className="text-xs text-red-400">{formState.errors.birthDate.message}</p>
+          )}
+          <p className="mt-1 text-xs text-slate-500">Folosită pentru reducerea de zi de naștere.</p>
         </div>
         <button type="submit" className="w-full rounded bg-rose-600 py-2 font-medium text-white hover:bg-rose-500">
           Creează cont

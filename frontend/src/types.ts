@@ -54,6 +54,7 @@ export interface SelectedSeat {
   col: number;
   seatType: string;
   price: number;
+  basePrice: number;
 }
 
 export interface Profile {
@@ -61,6 +62,7 @@ export interface Profile {
   name: string;
   email: string;
   role: 'USER' | 'ADMIN';
+  birthDate: string | null;
 }
 
 export interface BookingHistory {
@@ -68,6 +70,18 @@ export interface BookingHistory {
   movieTitle: string;
   screeningStartsAt: string;
   hallName: string;
+  totalPrice: string;
+  seats: { row: number; col: number; seatType: string; price: string }[];
+}
+
+export interface BookingPaid {
+  bookingId: number;
+  movieTitle: string;
+  screeningStartsAt: string;
+  hallName: string;
+  subtotal: string;
+  discountPercent: number;
+  discountAmount: string;
   totalPrice: string;
   seats: { row: number; col: number; seatType: string; price: string }[];
 }

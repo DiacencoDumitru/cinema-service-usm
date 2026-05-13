@@ -19,15 +19,16 @@ public class UserService {
 
     public ProfileResponse getProfile(UserPrincipal principal) {
         User user = userRepository.findById(principal.getUserId()).orElseThrow();
-        return new ProfileResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
+        return new ProfileResponse(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getBirthDate());
     }
 
     @Transactional
     public ProfileResponse updateProfile(UserPrincipal principal, UpdateProfileRequest request) {
         User user = userRepository.findById(principal.getUserId()).orElseThrow();
         user.setName(request.name());
+        user.setBirthDate(request.birthDate());
         userRepository.save(user);
-        return new ProfileResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
+        return new ProfileResponse(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getBirthDate());
     }
 
     public User requireUser(Long id) {
