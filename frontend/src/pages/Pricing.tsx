@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import type { CursorPage, PriceRow } from '../types';
+import { categoryLabel, formatLabel } from '../utils/labels';
 
 export function Pricing() {
   const q = useQuery({
@@ -26,8 +27,8 @@ export function Pricing() {
           <tbody>
             {(q.data?.items ?? []).map((row, i) => (
               <tr key={i} className="border-t border-slate-800">
-                <td className="p-3">{row.category}</td>
-                <td className="p-3">{row.format}</td>
+                <td className="p-3">{categoryLabel(row.category)}</td>
+                <td className="p-3">{formatLabel(row.format)}</td>
                 <td className="p-3">{row.amount}</td>
               </tr>
             ))}
