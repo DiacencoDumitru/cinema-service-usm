@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { AxiosError } from 'axios';
 import { api } from '../api/client';
 import type { PriceRow, ScreeningRow, SeatCell } from '../types';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
@@ -86,8 +87,14 @@ export function SeatSelection() {
         seatIds: selectedSeats.map((s) => s.seatId),
       });
       nav(`/rezervare/${screeningId}/confirm`);
-    } catch {
-      toast.error('Locurile nu sunt disponibile');
+    } catch (e) {
+      const err = e as AxiosError<{ message?: string }>;
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message;
+      if (status === 409) toast.error(msg ?? 'Locurile au fost rezervate deja');
+      else if (status === 400) toast.error(msg ?? 'Selecție invalidă');
+      else if (status !== 401 && status !== 403) toast.error('Eroare. Încearcă din nou');
+      await seats.refetch();
     }
   }
 
