@@ -43,7 +43,21 @@ export function Profile() {
     },
   });
 
-  if (q.isLoading || !q.data) return <p>Se încarcă…</p>;
+  if (q.isLoading) return <p>Se încarcă…</p>;
+  if (q.isError || !q.data) {
+    return (
+      <div className="mx-auto max-w-lg space-y-3">
+        <p className="text-red-400">Nu am putut încărca profilul.</p>
+        <button
+          type="button"
+          onClick={() => void q.refetch()}
+          className="rounded bg-rose-600 px-3 py-1.5 text-white hover:bg-rose-500"
+        >
+          Reîncearcă
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-6">

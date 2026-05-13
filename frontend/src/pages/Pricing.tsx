@@ -5,6 +5,7 @@ import {
   BIRTHDAY_DISCOUNT_PERCENT,
   BIRTHDAY_DISCOUNT_WINDOW_DAYS,
 } from '../utils/birthdayDiscount';
+import { categoryLabel, formatLabel } from '../utils/labels';
 
 export function Pricing() {
   const q = useQuery({
@@ -35,8 +36,8 @@ export function Pricing() {
           <tbody>
             {(q.data?.items ?? []).map((row, i) => (
               <tr key={i} className="border-t border-slate-800">
-                <td className="p-3">{row.category}</td>
-                <td className="p-3">{row.format}</td>
+                <td className="p-3">{categoryLabel(row.category)}</td>
+                <td className="p-3">{formatLabel(row.format)}</td>
                 <td className="p-3">{row.amount}</td>
               </tr>
             ))}
