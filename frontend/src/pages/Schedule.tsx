@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { CursorPage, Movie, ScreeningRow } from '../types';
+import { formatLabel } from '../utils/labels';
 
 const FALLBACK_POSTER =
   "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%230f172a'/%3E%3Cstop offset='100%25' stop-color='%231e293b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='600' fill='url(%23g)'/%3E%3Ctext x='50%25' y='48%25' dominant-baseline='middle' text-anchor='middle' fill='%23e2e8f0' font-family='Arial,sans-serif' font-size='26'%3EAurora%20Cinema%3C/text%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='Arial,sans-serif' font-size='18'%3EPoster unavailable%3C/text%3E%3C/svg%3E";
@@ -31,12 +32,6 @@ function labelForDayIndex(i: number, d: Date) {
   if (i === 0) return 'ASTĂZI';
   if (i === 1) return 'MÂINE';
   return formatDdMm(d);
-}
-
-function formatScreeningFormat(f: string) {
-  if (f === 'THREE_D') return '3D';
-  if (f === 'TWO_D') return '2D';
-  return f;
 }
 
 function formatReleaseDate(iso: string | null) {
@@ -270,7 +265,7 @@ export function Schedule() {
                   </div>
                   <div>
                     <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Format</dt>
-                    <dd className="text-slate-200">{formatScreeningFormat(selectedRow.format)}</dd>
+                    <dd className="text-slate-200">{formatLabel(selectedRow.format)}</dd>
                   </div>
                   <div>
                     <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Actori</dt>
