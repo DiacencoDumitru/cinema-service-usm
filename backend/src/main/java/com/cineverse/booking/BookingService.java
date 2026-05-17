@@ -33,7 +33,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,8 +42,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
-
-    private static final Set<BookingStatus> BLOCKING_STATUSES = EnumSet.of(BookingStatus.PAID, BookingStatus.PENDING);
 
     private final BookingRepository bookingRepository;
     private final BookingSeatRepository bookingSeatRepository;
@@ -112,7 +109,7 @@ public class BookingService {
         }
 
         for (Long seatId : seatIds) {
-            if (bookingSeatRepository.existsBySeatIdAndBooking_StatusIn(seatId, BLOCKING_STATUSES)) {
+            if (bookingSeatRepository.existsBySeatId(seatId)) {
                 seatLockService.releaseLocks(request.screeningId(), seatIds);
                 throw new ApiException(HttpStatus.CONFLICT, "Seat already booked");
             }
@@ -260,6 +257,7 @@ public class BookingService {
         }
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+        bookingSeatRepository.deleteByBooking_Id(bookingId);
     }
 
     public CursorPage<BookingHistoryResponse> listUserBookings(Long userId, String cursor, int limit) throws Exception {
