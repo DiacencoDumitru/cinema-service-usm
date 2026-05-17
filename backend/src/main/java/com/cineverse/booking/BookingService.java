@@ -8,11 +8,13 @@ import com.cineverse.hall.Seat;
 import com.cineverse.hall.SeatRepository;
 import com.cineverse.hall.SeatType;
 import com.cineverse.booking.dto.AdminBookingRowResponse;
+import com.cineverse.booking.dto.BookingDetailResponse;
 import com.cineverse.booking.dto.BookingHistoryResponse;
 import com.cineverse.booking.dto.BookingPaidResponse;
 import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatLineResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
+import com.cineverse.booking.dto.SeatLockResponse;
 import com.cineverse.price.PriceCategory;
 import com.cineverse.price.PriceRuleRepository;
 import com.cineverse.screening.Screening;
@@ -72,7 +74,7 @@ public class BookingService {
         this.birthdayDiscountService = birthdayDiscountService;
     }
 
-    public void lockSeats(Long userId, BookingSeatSelectionRequest request) {
+    public SeatLockResponse lockSeats(Long userId, BookingSeatSelectionRequest request) {
         Screening screening = screeningRepository.findByIdWithMovieAndHall(request.screeningId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Screening not found"));
         List<Long> seatIds = extractSeatIds(request);
@@ -82,6 +84,7 @@ public class BookingService {
         if (!seatLockService.tryAcquireAll(request.screeningId(), userId, seatIds, ttl)) {
             throw new ApiException(HttpStatus.CONFLICT, "One or more seats are not available");
         }
+        return new SeatLockResponse(Instant.now().plusSeconds(ttl), ttl);
     }
 
     @Transactional
@@ -153,6 +156,7 @@ public class BookingService {
         booking.setScreening(screening);
         booking.setTotalPrice(total);
         booking.setStatus(BookingStatus.PENDING);
+        booking.setBookingCode(generateUniqueBookingCode());
         bookingRepository.saveAndFlush(booking);
 
         for (int i = 0; i < seats.size(); i++) {
@@ -199,6 +203,7 @@ public class BookingService {
         var movie = screening.getMovie();
         return new BookingPaidResponse(
                 booking.getId(),
+                booking.getBookingCode(),
                 movie.getTitle(),
                 movie.getOriginalTitle(),
                 movie.getTitleRu(),
@@ -241,6 +246,35 @@ public class BookingService {
         }
         List<BookingHistoryResponse> items = page.stream().map(this::toHistory).collect(Collectors.toList());
         return new CursorPage<>(items, next, hasMore);
+    }
+
+    public BookingDetailResponse getUserBooking(Long userId, Long bookingId) {
+        Booking booking = bookingRepository.findByIdForUser(bookingId, userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found"));
+        if (booking.getStatus() != BookingStatus.PAID) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Ticket is available only for paid bookings");
+        }
+        Screening s = booking.getScreening();
+        var movie = s.getMovie();
+        List<BookingSeatLineResponse> seatLines = booking.getSeats().stream()
+                .map(bs -> new BookingSeatLineResponse(
+                        bs.getSeat().getRowNum(),
+                        bs.getSeat().getColNum(),
+                        bs.getSeat().getSeatType().name(),
+                        bs.getPrice()))
+                .collect(Collectors.toList());
+        return new BookingDetailResponse(
+                booking.getId(),
+                booking.getBookingCode(),
+                movie.getTitle(),
+                movie.getOriginalTitle(),
+                movie.getTitleRu(),
+                s.getStartsAt(),
+                s.getHall().getName(),
+                booking.getTotalPrice(),
+                booking.getStatus().name(),
+                seatLines
+        );
     }
 
     public CursorPage<AdminBookingRowResponse> listAdminBookings(Long movieId, LocalDate date, String cursor, int limit)
@@ -289,6 +323,7 @@ public class BookingService {
         var movie = s.getMovie();
         return new BookingHistoryResponse(
                 b.getId(),
+                b.getBookingCode(),
                 movie.getTitle(),
                 movie.getOriginalTitle(),
                 movie.getTitleRu(),
@@ -352,5 +387,15 @@ public class BookingService {
         return priceRuleRepository.findByCategoryAndFormat(category, screening.getFormat())
                 .map(rule -> rule.getAmount())
                 .orElse(screening.getBasePrice());
+    }
+
+    private String generateUniqueBookingCode() {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String code = BookingCodeGenerator.generate();
+            if (!bookingRepository.existsByBookingCode(code)) {
+                return code;
+            }
+        }
+        throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not generate booking code");
     }
 }

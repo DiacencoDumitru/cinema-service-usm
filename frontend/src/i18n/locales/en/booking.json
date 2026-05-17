@@ -54,5 +54,12 @@
   "paySimulated": "Pay (simulation)",
   "paySuccess": "Simulated payment — ticket issued!",
   "payFailed": "Payment failed",
-  "redirecting": "Redirecting…"
+  "redirecting": "Redirecting…",
+  "lockCountdown": "Seats held for {{time}}",
+  "lockExpired": "Seat hold expired. Please select again.",
+  "ticketTitle": "E-ticket",
+  "ticketLoadFailed": "Could not load ticket.",
+  "backToTickets": "← My tickets",
+  "bookingCode": "Booking code",
+  "viewTicket": "View ticket (QR)"
 }
