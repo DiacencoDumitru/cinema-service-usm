@@ -54,5 +54,10 @@
   "paySimulated": "Plătește (simulare)",
   "paySuccess": "Plată simulată — bilet emis!",
   "payFailed": "Plată eșuată",
-  "redirecting": "Redirecționare…"
+  "redirecting": "Redirecționare…",
+  "ticketTitle": "Bilet electronic",
+  "ticketLoadFailed": "Nu s-a putut încărca biletul.",
+  "backToTickets": "← Biletele mele",
+  "bookingCode": "Cod rezervare",
+  "viewTicket": "Vezi biletul (QR)"
 }
