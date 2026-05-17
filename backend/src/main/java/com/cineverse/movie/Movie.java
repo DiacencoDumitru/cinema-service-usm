@@ -60,6 +60,12 @@ public class Movie {
     @Column(columnDefinition = "text")
     private String synopsis;
 
+    @Column(name = "synopsis_ru", columnDefinition = "text")
+    private String synopsisRu;
+
+    @Column(name = "synopsis_en", columnDefinition = "text")
+    private String synopsisEn;
+
     @Column(name = "poster_url", length = 2048)
     private String posterUrl;
 
@@ -173,6 +179,22 @@ public class Movie {
 
     public void setSynopsis(String synopsis) {
         this.synopsis = synopsis;
+    }
+
+    public String getSynopsisRu() {
+        return synopsisRu;
+    }
+
+    public void setSynopsisRu(String synopsisRu) {
+        this.synopsisRu = synopsisRu;
+    }
+
+    public String getSynopsisEn() {
+        return synopsisEn;
+    }
+
+    public void setSynopsisEn(String synopsisEn) {
+        this.synopsisEn = synopsisEn;
     }
 
     public String getPosterUrl() {

@@ -43,8 +43,10 @@ public class MovieService {
         this.cineverseProperties = cineverseProperties;
     }
 
-    public CursorPage<MovieResponse> list(MovieStatus status, String genresCsv, String cursor, int limit) throws Exception {
+    public CursorPage<MovieResponse> list(MovieStatus status, String genresCsv, String search, String cursor, int limit)
+            throws Exception {
         boolean cacheable = (genresCsv == null || genresCsv.isBlank())
+                && (search == null || search.isBlank())
                 && status == null
                 && (cursor == null || cursor.isBlank());
         if (cacheable) {
@@ -58,7 +60,8 @@ public class MovieService {
         Long cursorId = CursorCodec.decodeId(cursor);
         String statusStr = status == null ? null : status.name();
         String genreArg = genresCsv == null ? "" : genresCsv;
-        List<Movie> rows = movieRepository.findPageNative(statusStr, genreArg, cursorId, limit + 1);
+        String searchArg = search == null ? "" : search.trim();
+        List<Movie> rows = movieRepository.findPageNative(statusStr, genreArg, searchArg, cursorId, limit + 1);
         boolean hasMore = rows.size() > limit;
         List<Movie> page = hasMore ? rows.subList(0, limit) : rows;
         String next = null;
@@ -120,6 +123,8 @@ public class MovieService {
         movie.setActors(request.actors());
         movie.setAgeRating(request.ageRating());
         movie.setSynopsis(request.synopsis());
+        movie.setSynopsisRu(request.synopsisRu());
+        movie.setSynopsisEn(request.synopsisEn());
         movie.setPosterUrl(request.posterUrl());
         movie.setTrailerUrl(normalizeYouTubeTrailerUrl(request.trailerUrl()));
         movie.setStatus(request.status());
@@ -145,6 +150,8 @@ public class MovieService {
                 m.getActors(),
                 m.getAgeRating(),
                 m.getSynopsis(),
+                m.getSynopsisRu(),
+                m.getSynopsisEn(),
                 m.getPosterUrl(),
                 normalizeYouTubeTrailerUrl(m.getTrailerUrl()),
                 m.getStatus(),
