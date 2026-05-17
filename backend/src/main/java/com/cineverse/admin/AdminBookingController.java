@@ -5,6 +5,9 @@ import com.cineverse.booking.BookingService;
 import com.cineverse.booking.dto.AdminBookingRowResponse;
 import com.cineverse.common.pagination.CursorPage;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +35,17 @@ public class AdminBookingController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int limit) throws Exception {
         return bookingService.listAdminBookings(movieId, date, cursor, limit);
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<String> export(
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) throws Exception {
+        String csv = bookingService.exportAdminBookingsCsv(movieId, date);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=bookings.csv")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(csv);
     }
 
     @PostMapping("/{id}/cancel")

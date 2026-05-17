@@ -186,6 +186,21 @@ public class BookingService {
         return new CursorPage<>(items, next, hasMore);
     }
 
+    public String exportAdminBookingsCsv(Long movieId, LocalDate date) throws Exception {
+        CursorPage<AdminBookingRowResponse> page = listAdminBookings(movieId, date, null, 10_000);
+        StringBuilder sb = new StringBuilder("bookingId,userEmail,movie,screeningAt,hall,total,status\n");
+        for (AdminBookingRowResponse row : page.items()) {
+            sb.append(row.bookingId()).append(',')
+                    .append(csvEscape(row.userEmail())).append(',')
+                    .append(csvEscape(row.movieTitle())).append(',')
+                    .append(row.screeningStartsAt()).append(',')
+                    .append(csvEscape(row.hallName())).append(',')
+                    .append(row.totalPrice()).append(',')
+                    .append(row.status()).append('\n');
+        }
+        return sb.toString();
+    }
+
     public CursorPage<AdminBookingRowResponse> listAdminBookings(Long movieId, LocalDate date, String cursor, int limit)
             throws Exception {
         Long cursorId = CursorCodec.decodeId(cursor);
@@ -295,5 +310,15 @@ public class BookingService {
         return priceRuleRepository.findByCategoryAndFormat(category, screening.getFormat())
                 .map(rule -> rule.getAmount())
                 .orElse(screening.getBasePrice());
+    }
+
+    private static String csvEscape(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 }

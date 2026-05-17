@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -42,4 +43,22 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.screening s JOIN FETCH s.movie JOIN FETCH s.hall JOIN FETCH b.user WHERE b.id = :id")
     Optional<Booking> findByIdWithDetails(@Param("id") Long id);
+
+    @Query("SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.status = :status AND b.createdAt >= :since")
+    BigDecimal sumPaidRevenueSince(@Param("status") BookingStatus status, @Param("since") Instant since);
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.status = :status AND b.createdAt >= :since")
+    long countByStatusSince(@Param("status") BookingStatus status, @Param("since") Instant since);
+
+    @Query(value = """
+            SELECT m.id, m.title, COUNT(b.id) AS cnt
+            FROM bookings b
+            JOIN screenings s ON s.id = b.screening_id
+            JOIN movies m ON m.id = s.movie_id
+            WHERE b.status = 'PAID' AND b.created_at >= :since
+            GROUP BY m.id, m.title
+            ORDER BY cnt DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Object[]> topMoviesSince(@Param("since") Instant since, @Param("limit") int limit);
 }
