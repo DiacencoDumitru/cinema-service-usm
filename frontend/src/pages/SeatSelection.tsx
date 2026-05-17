@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { api } from '../api/client';
+import { FetchBanner, QueryErrorRetry } from '../components/FetchBanner';
 import type { PriceRow, Profile, ScreeningRow, SeatCell } from '../types';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import {
@@ -119,9 +120,26 @@ export function SeatSelection() {
 
   if (!Number.isFinite(screeningId)) return <p>Seans invalid.</p>;
 
+  if (meta.isPending || prices.isPending || seats.isPending) {
+    return <FetchBanner tone="load">Se încarcă sala și prețurile…</FetchBanner>;
+  }
+
+  if (meta.isError || prices.isError || seats.isError || !meta.data) {
+    return (
+      <QueryErrorRetry
+        message="Nu s-au putut încărca datele seansului."
+        onRetry={() => {
+          void meta.refetch();
+          void prices.refetch();
+          void seats.refetch();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <Link className="text-sm text-rose-400 hover:underline" to={`/film/${meta.data?.movieId ?? ''}`}>
+      <Link className="text-sm text-rose-400 hover:underline" to={`/film/${meta.data.movieId}`}>
         ← Înapoi la film
       </Link>
       <h1 className="text-2xl font-bold">Alege locuri</h1>
