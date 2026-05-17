@@ -48,11 +48,14 @@ export interface SeatCell {
   status: 'FREE' | 'LOCKED' | 'BOOKED' | 'HELD';
 }
 
+export type TicketPriceCategory = 'STANDARD' | 'CHILD' | 'STUDENT';
+
 export interface SelectedSeat {
   seatId: number;
   row: number;
   col: number;
   seatType: string;
+  priceCategory: TicketPriceCategory;
   price: number;
   basePrice: number;
 }
@@ -71,6 +74,7 @@ export interface BookingHistory {
   screeningStartsAt: string;
   hallName: string;
   totalPrice: string;
+  status: string;
   seats: { row: number; col: number; seatType: string; price: string }[];
 }
 
@@ -107,4 +111,5 @@ export interface AdminBookingRow {
   screeningStartsAt: string;
   hallName: string;
   totalPrice: string;
+  status: string;
 }

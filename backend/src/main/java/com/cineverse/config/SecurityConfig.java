@@ -24,10 +24,17 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CineverseProperties cineverseProperties;
+    private final JsonAuthenticationEntryPoint authenticationEntryPoint;
+    private final JsonAccessDeniedHandler accessDeniedHandler;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, CineverseProperties cineverseProperties) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          CineverseProperties cineverseProperties,
+                          JsonAuthenticationEntryPoint authenticationEntryPoint,
+                          JsonAccessDeniedHandler accessDeniedHandler) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.cineverseProperties = cineverseProperties;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Bean
@@ -36,6 +43,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -59,8 +69,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/sessions/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/admin/bookings").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/bookings/*/cancel").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/lock").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/lock", "/api/bookings/*/cancel")
+                        .authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,9 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import type { BookingPaid } from '../types';
+import { categoryLabel } from '../utils/labels';
+import { bookingSeatsPayload } from '../utils/seatPrice';
 
 export function BookingConfirm() {
   const { screeningId: sid } = useParams();
@@ -16,12 +19,18 @@ export function BookingConfirm() {
   const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
   const discountAmount = subtotal - total;
 
+  useEffect(() => {
+    if (!Number.isFinite(screeningId) || selectedSeats.length === 0) {
+      nav(`/rezervare/${screeningId}`, { replace: true });
+    }
+  }, [nav, screeningId, selectedSeats.length]);
+
   const pay = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post<BookingPaid>('/api/bookings', {
-        screeningId,
-        seatIds: selectedSeats.map((s) => s.seatId),
-      });
+      const { data } = await api.post<BookingPaid>(
+        '/api/bookings',
+        bookingSeatsPayload(screeningId, selectedSeats),
+      );
       return data;
     },
     onSuccess: () => {
@@ -31,6 +40,10 @@ export function BookingConfirm() {
     },
     onError: () => toast.error('Plată eșuată'),
   });
+
+  if (selectedSeats.length === 0) {
+    return <p className="text-slate-400">Redirecționare…</p>;
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -51,7 +64,8 @@ export function BookingConfirm() {
           <ul className="space-y-1 text-slate-300">
             {selectedSeats.map((s) => (
               <li key={s.seatId}>
-                Rând {s.row}, loc {s.col} · {s.seatType} · {s.price.toFixed(2)} MDL
+                Rând {s.row}, loc {s.col} · {s.seatType} · {categoryLabel(s.priceCategory)} ·{' '}
+                {s.price.toFixed(2)} MDL
               </li>
             ))}
           </ul>
@@ -64,9 +78,7 @@ export function BookingConfirm() {
                 </p>
               </>
             )}
-            <p className="text-lg font-semibold text-emerald-400">
-              Total: {total.toFixed(2)} MDL
-            </p>
+            <p className="text-lg font-semibold text-emerald-400">Total: {total.toFixed(2)} MDL</p>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
+import { AdminQueryList } from '../components/FetchBanner';
 import type { AdminBookingRow, CursorPage, Hall, Movie, ScreeningRow } from '../types';
 
 const navCls = ({ isActive }: { isActive: boolean }) =>
@@ -150,21 +151,25 @@ function MoviesAdmin() {
     <div className="grid gap-8 lg:grid-cols-2">
       <div>
         <h2 className="mb-4 font-semibold">Listă</h2>
-        <ul className="space-y-2 text-sm">
-          {(q.data?.items ?? []).map((m) => (
-            <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
-              <span>{m.title}</span>
-              <div className="flex gap-2">
-                <button type="button" className="text-rose-300 hover:underline" onClick={() => void beginEditMovie(m.id)}>
-                  Editează
-                </button>
-                <button type="button" className="text-red-400 hover:underline" onClick={() => del.mutate(m.id)}>
-                  Șterge
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <AdminQueryList query={q} emptyMessage="Niciun film.">
+          {(data) => (
+            <ul className="space-y-2 text-sm">
+              {data.items.map((m) => (
+                <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
+                  <span>{m.title}</span>
+                  <div className="flex gap-2">
+                    <button type="button" className="text-rose-300 hover:underline" onClick={() => void beginEditMovie(m.id)}>
+                      Editează
+                    </button>
+                    <button type="button" className="text-red-400 hover:underline" onClick={() => del.mutate(m.id)}>
+                      Șterge
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </AdminQueryList>
       </div>
       <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-900 p-4">
         <h2 className="font-semibold">{editingId != null ? `Editare film #${editingId}` : 'Film nou'}</h2>
@@ -269,6 +274,8 @@ function HallsAdmin() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
+      {q.isPending && <p className="text-sm text-slate-400">Se încarcă sălile…</p>}
+      {q.isError && <p className="text-sm text-red-400">Eroare la încărcarea sălilor.</p>}
       <ul className="space-y-2 text-sm">
         {(q.data?.items ?? []).map((h) => (
           <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
@@ -417,8 +424,10 @@ function SessionsAdmin() {
           value={listDate}
           onChange={(e) => setListDate(e.target.value)}
         />
+        <AdminQueryList query={sessionsList} emptyMessage="Niciun seans în această zi.">
+          {(items) => (
         <ul className="max-h-[480px] space-y-2 overflow-y-auto text-sm">
-          {(sessionsList.data ?? []).map((s) => (
+          {items.map((s) => (
             <li key={s.screeningId} className="rounded border border-slate-800 bg-slate-900 px-3 py-2">
               <p className="font-medium">{s.title}</p>
               <p className="text-slate-400">
@@ -435,7 +444,8 @@ function SessionsAdmin() {
             </li>
           ))}
         </ul>
-        {sessionsList.data?.length === 0 && <p className="text-slate-500">Nu există seanse în această zi.</p>}
+          )}
+        </AdminQueryList>
       </div>
       <div className="max-w-md space-y-3 rounded-lg border border-slate-800 bg-slate-900 p-4">
         <h2 className="font-semibold">{editingScreeningId != null ? `Editare seans #${editingScreeningId}` : 'Seans nou'}</h2>
@@ -530,10 +540,32 @@ function BookingsAdmin() {
           onChange={(e) => setDateFilter(e.target.value)}
         />
       </div>
+      {q.isPending && <p className="text-sm text-slate-400">Se încarcă rezervările…</p>}
+      {q.isError && <p className="text-sm text-red-400">Eroare la încărcarea rezervărilor.</p>}
       <ul className="space-y-2 text-sm">
         {(q.data ?? []).map((b) => (
-          <li key={b.bookingId} className="rounded border border-slate-800 bg-slate-900 px-3 py-2">
-            #{b.bookingId} {b.userEmail} — {b.movieTitle} — {new Date(b.screeningStartsAt).toLocaleString('ro-RO')} — {b.totalPrice} MDL
+          <li key={b.bookingId} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
+            <span>
+              #{b.bookingId} {b.userEmail} — {b.movieTitle} —{' '}
+              {new Date(b.screeningStartsAt).toLocaleString('ro-RO')} — {b.totalPrice} MDL · {b.status}
+            </span>
+            {b.status === 'PAID' && new Date(b.screeningStartsAt).getTime() > Date.now() && (
+              <button
+                type="button"
+                className="text-red-400 hover:underline"
+                onClick={() =>
+                  void api
+                    .post(`/api/admin/bookings/${b.bookingId}/cancel`)
+                    .then(() => {
+                      toast.success('Rezervare anulată');
+                      void q.refetch();
+                    })
+                    .catch(() => toast.error('Eroare'))
+                }
+              >
+                Anulează
+              </button>
+            )}
           </li>
         ))}
       </ul>

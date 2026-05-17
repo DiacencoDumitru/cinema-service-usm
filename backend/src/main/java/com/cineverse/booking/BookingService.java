@@ -10,6 +10,7 @@ import com.cineverse.hall.SeatType;
 import com.cineverse.booking.dto.AdminBookingRowResponse;
 import com.cineverse.booking.dto.BookingHistoryResponse;
 import com.cineverse.booking.dto.BookingPaidResponse;
+import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatLineResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
 import com.cineverse.price.PriceCategory;
@@ -28,8 +29,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,9 +72,11 @@ public class BookingService {
     public void lockSeats(Long userId, BookingSeatSelectionRequest request) {
         Screening screening = screeningRepository.findByIdWithMovieAndHall(request.screeningId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Screening not found"));
-        validateSeatSelection(screening, request.seatIds());
+        List<Long> seatIds = extractSeatIds(request);
+        validateSeatSelection(screening, seatIds);
+        validatePriceCategories(request);
         long ttl = cineverseProperties.getSeatLockTtlSeconds();
-        if (!seatLockService.tryAcquireAll(request.screeningId(), userId, request.seatIds(), ttl)) {
+        if (!seatLockService.tryAcquireAll(request.screeningId(), userId, seatIds, ttl)) {
             throw new ApiException(HttpStatus.CONFLICT, "One or more seats are not available");
         }
     }
@@ -80,18 +85,21 @@ public class BookingService {
     public BookingPaidResponse pay(Long userId, BookingSeatSelectionRequest request) {
         Screening screening = screeningRepository.findByIdWithMovieAndHall(request.screeningId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Screening not found"));
-        List<Seat> seats = validateSeatSelection(screening, request.seatIds());
+        validatePriceCategories(request);
+        Map<Long, PriceCategory> categoriesBySeat = categoriesBySeatId(request);
+        List<Long> seatIds = extractSeatIds(request);
+        List<Seat> seats = validateSeatSelection(screening, seatIds);
 
-        if (!seatLockService.locksHeldByUser(request.screeningId(), userId, request.seatIds())) {
+        if (!seatLockService.locksHeldByUser(request.screeningId(), userId, seatIds)) {
             long ttl = cineverseProperties.getSeatLockTtlSeconds();
-            if (!seatLockService.tryAcquireAll(request.screeningId(), userId, request.seatIds(), ttl)) {
+            if (!seatLockService.tryAcquireAll(request.screeningId(), userId, seatIds, ttl)) {
                 throw new ApiException(HttpStatus.CONFLICT, "One or more seats are not available");
             }
         }
 
-        for (Long seatId : request.seatIds()) {
-            if (bookingSeatRepository.existsBySeatId(seatId)) {
-                seatLockService.releaseLocks(request.screeningId(), request.seatIds());
+        for (Long seatId : seatIds) {
+            if (bookingSeatRepository.existsBySeatIdAndBooking_Status(seatId, BookingStatus.PAID)) {
+                seatLockService.releaseLocks(request.screeningId(), seatIds);
                 throw new ApiException(HttpStatus.CONFLICT, "Seat already booked");
             }
         }
@@ -104,7 +112,8 @@ public class BookingService {
         BigDecimal total = BigDecimal.ZERO;
         List<BookingSeatLineResponse> lines = new ArrayList<>();
         for (Seat seat : seats) {
-            BigDecimal base = resolvePrice(screening, seat);
+            PriceCategory ticketCategory = categoriesBySeat.get(seat.getId());
+            BigDecimal base = resolvePrice(screening, seat, ticketCategory);
             BigDecimal applied = discountEligible ? birthdayDiscountService.apply(base) : base;
             subtotal = subtotal.add(base);
             total = total.add(applied);
@@ -129,7 +138,7 @@ public class BookingService {
             bookingSeatRepository.save(bs);
         }
 
-        seatLockService.releaseLocks(request.screeningId(), request.seatIds());
+        seatLockService.releaseLocks(request.screeningId(), seatIds);
 
         return new BookingPaidResponse(
                 booking.getId(),
@@ -142,6 +151,23 @@ public class BookingService {
                 total,
                 lines
         );
+    }
+
+    @Transactional
+    public void cancelBooking(Long userId, Long bookingId, boolean admin) {
+        Booking booking = bookingRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found"));
+        if (!admin && !booking.getUser().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Not your booking");
+        }
+        if (booking.getStatus() != BookingStatus.PAID) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Booking cannot be cancelled");
+        }
+        if (booking.getScreening().getStartsAt().isBefore(Instant.now())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Screening has already started");
+        }
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
     }
 
     public CursorPage<BookingHistoryResponse> listUserBookings(Long userId, String cursor, int limit) throws Exception {
@@ -182,7 +208,8 @@ public class BookingService {
                 s.getMovie().getTitle(),
                 s.getStartsAt(),
                 s.getHall().getName(),
-                b.getTotalPrice()
+                b.getTotalPrice(),
+                b.getStatus().name()
         );
     }
 
@@ -202,8 +229,30 @@ public class BookingService {
                 s.getStartsAt(),
                 s.getHall().getName(),
                 b.getTotalPrice(),
+                b.getStatus().name(),
                 seatLines
         );
+    }
+
+    private List<Long> extractSeatIds(BookingSeatSelectionRequest request) {
+        return request.seats().stream().map(BookingSeatItemRequest::seatId).toList();
+    }
+
+    private Map<Long, PriceCategory> categoriesBySeatId(BookingSeatSelectionRequest request) {
+        Map<Long, PriceCategory> map = new HashMap<>();
+        for (BookingSeatItemRequest item : request.seats()) {
+            map.put(item.seatId(), item.priceCategory());
+        }
+        return map;
+    }
+
+    private void validatePriceCategories(BookingSeatSelectionRequest request) {
+        for (BookingSeatItemRequest item : request.seats()) {
+            PriceCategory cat = item.priceCategory();
+            if (cat == PriceCategory.VIP) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid ticket category");
+            }
+        }
     }
 
     private List<Seat> validateSeatSelection(Screening screening, List<Long> seatIds) {
@@ -227,8 +276,13 @@ public class BookingService {
         return seats;
     }
 
-    private BigDecimal resolvePrice(Screening screening, Seat seat) {
-        PriceCategory category = seat.getSeatType() == SeatType.VIP ? PriceCategory.VIP : PriceCategory.STANDARD;
+    private BigDecimal resolvePrice(Screening screening, Seat seat, PriceCategory ticketCategory) {
+        PriceCategory category;
+        if (ticketCategory == PriceCategory.CHILD || ticketCategory == PriceCategory.STUDENT) {
+            category = ticketCategory;
+        } else {
+            category = seat.getSeatType() == SeatType.VIP ? PriceCategory.VIP : PriceCategory.STANDARD;
+        }
         return priceRuleRepository.findByCategoryAndFormat(category, screening.getFormat())
                 .map(rule -> rule.getAmount())
                 .orElse(screening.getBasePrice());

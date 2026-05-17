@@ -2,6 +2,7 @@ package com.cineverse.screening;
 
 import com.cineverse.booking.BookingRepository;
 import com.cineverse.booking.BookingSeatRepository;
+import com.cineverse.booking.BookingStatus;
 import com.cineverse.booking.SeatLockService;
 import com.cineverse.cache.RedisCacheEvictionService;
 import com.cineverse.common.ApiException;
@@ -146,7 +147,7 @@ public class ScreeningService {
         List<ScreeningSeatResponse> out = new ArrayList<>();
         for (Seat seat : seats) {
             String status;
-            if (bookingSeatRepository.existsBySeatId(seat.getId())) {
+            if (bookingSeatRepository.existsBySeatIdAndBooking_Status(seat.getId(), BookingStatus.PAID)) {
                 status = "BOOKED";
             } else {
                 String owner = seatLockService.lockOwner(screeningId, seat.getId());

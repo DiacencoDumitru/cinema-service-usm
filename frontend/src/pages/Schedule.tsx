@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { FetchBanner, QueryErrorRetry } from '../components/FetchBanner';
 import type { CursorPage, Movie, ScreeningRow } from '../types';
 import { formatLabel } from '../utils/labels';
 
@@ -166,6 +167,11 @@ export function Schedule() {
         </select>
       </div>
 
+      {q.isPending && <FetchBanner tone="load">Se încarcă programul…</FetchBanner>}
+      {q.isError && (
+        <QueryErrorRetry message="Nu s-a putut încărca programul." onRetry={() => void q.refetch()} />
+      )}
+      {q.isSuccess && (
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-start">
         <div className="min-w-0 space-y-2">
           {sortedItems.map((row) => {
@@ -283,6 +289,7 @@ export function Schedule() {
           )}
         </aside>
       </div>
+      )}
     </div>
   );
 }
