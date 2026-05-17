@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { api } from '../api/client';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import type { BookingPaid } from '../types';
+import { categoryLabel } from '../utils/labels';
+import { bookingSeatsPayload } from '../utils/seatPrice';
 
 export function BookingConfirm() {
   const { screeningId: sid } = useParams();
@@ -18,10 +20,10 @@ export function BookingConfirm() {
 
   const pay = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post<BookingPaid>('/api/bookings', {
-        screeningId,
-        seatIds: selectedSeats.map((s) => s.seatId),
-      });
+      const { data } = await api.post<BookingPaid>(
+        '/api/bookings',
+        bookingSeatsPayload(screeningId, selectedSeats),
+      );
       return data;
     },
     onSuccess: () => {
@@ -51,7 +53,8 @@ export function BookingConfirm() {
           <ul className="space-y-1 text-slate-300">
             {selectedSeats.map((s) => (
               <li key={s.seatId}>
-                Rând {s.row}, loc {s.col} · {s.seatType} · {s.price.toFixed(2)} MDL
+                Rând {s.row}, loc {s.col} · {s.seatType} · {categoryLabel(s.priceCategory)} ·{' '}
+                {s.price.toFixed(2)} MDL
               </li>
             ))}
           </ul>
@@ -64,9 +67,7 @@ export function BookingConfirm() {
                 </p>
               </>
             )}
-            <p className="text-lg font-semibold text-emerald-400">
-              Total: {total.toFixed(2)} MDL
-            </p>
+            <p className="text-lg font-semibold text-emerald-400">Total: {total.toFixed(2)} MDL</p>
           </div>
         </div>
       </div>

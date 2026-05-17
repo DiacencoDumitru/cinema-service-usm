@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { SelectedSeat } from '../types';
+import type { SelectedSeat, TicketPriceCategory } from '../types';
 
 interface Draft {
   screeningId: number | null;
@@ -18,6 +18,7 @@ interface Draft {
     basePrice: number,
   ) => void;
   toggleSeat: (seat: SelectedSeat) => void;
+  setSeatPriceCategory: (seatId: number, priceCategory: TicketPriceCategory) => void;
   clearSelection: () => void;
   reset: () => void;
 }
@@ -47,6 +48,13 @@ export const useBookingDraftStore = create<Draft>((set, get) => ({
     } else {
       set({ selectedSeats: [...cur, seat] });
     }
+  },
+  setSeatPriceCategory: (seatId, priceCategory) => {
+    set({
+      selectedSeats: get().selectedSeats.map((s) =>
+        s.seatId === seatId ? { ...s, priceCategory } : s,
+      ),
+    });
   },
   clearSelection: () => set({ selectedSeats: [] }),
   reset: () =>
