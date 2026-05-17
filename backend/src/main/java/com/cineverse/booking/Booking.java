@@ -46,6 +46,9 @@ public class Booking {
     @Column(name = "booking_code", nullable = false, length = 16, unique = true)
     private String bookingCode;
 
+    @Column(name = "promo_code", length = 32)
+    private String promoCode;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -93,6 +96,14 @@ public class Booking {
 
     public void setStatus(BookingStatus status) {
         this.status = status;
+    }
+
+    public String getPromoCode() {
+        return promoCode;
+    }
+
+    public void setPromoCode(String promoCode) {
+        this.promoCode = promoCode;
     }
 
     public Instant getCreatedAt() {

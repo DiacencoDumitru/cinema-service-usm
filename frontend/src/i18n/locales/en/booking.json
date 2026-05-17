@@ -52,6 +52,7 @@
   "subtotal": "Subtotal:",
   "birthdayDiscountLine": "Birthday discount:",
   "paySimulated": "Pay (simulation)",
+  "promoCode": "Promo code (optional)",
   "paySuccess": "Simulated payment — ticket issued!",
   "payFailed": "Payment failed",
   "redirecting": "Redirecting…",

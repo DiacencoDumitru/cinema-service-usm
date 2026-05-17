@@ -15,6 +15,7 @@ import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatLineResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
 import com.cineverse.booking.dto.SeatLockResponse;
+import com.cineverse.promo.PromoCodeService;
 import com.cineverse.price.PriceCategory;
 import com.cineverse.price.PriceRuleRepository;
 import com.cineverse.screening.Screening;
@@ -53,6 +54,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final CineverseProperties cineverseProperties;
     private final BirthdayDiscountService birthdayDiscountService;
+    private final PromoCodeService promoCodeService;
 
     public BookingService(BookingRepository bookingRepository,
                           BookingSeatRepository bookingSeatRepository,
@@ -62,7 +64,8 @@ public class BookingService {
                           PriceRuleRepository priceRuleRepository,
                           UserRepository userRepository,
                           CineverseProperties cineverseProperties,
-                          BirthdayDiscountService birthdayDiscountService) {
+                          BirthdayDiscountService birthdayDiscountService,
+                          PromoCodeService promoCodeService) {
         this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
         this.screeningRepository = screeningRepository;
@@ -72,6 +75,7 @@ public class BookingService {
         this.userRepository = userRepository;
         this.cineverseProperties = cineverseProperties;
         this.birthdayDiscountService = birthdayDiscountService;
+        this.promoCodeService = promoCodeService;
     }
 
     public SeatLockResponse lockSeats(Long userId, BookingSeatSelectionRequest request) {
@@ -110,7 +114,7 @@ public class BookingService {
             }
         }
 
-        return savePendingBooking(userId, screening, seats, categoriesBySeat, request.screeningId(), seatIds);
+        return savePendingBooking(userId, screening, seats, categoriesBySeat, request);
     }
 
     @Transactional
@@ -125,6 +129,9 @@ public class BookingService {
         }
         booking.setStatus(BookingStatus.PAID);
         bookingRepository.save(booking);
+        if (booking.getPromoCode() != null) {
+            promoCodeService.consume(booking.getPromoCode());
+        }
         return toPaidResponse(booking);
     }
 
@@ -132,8 +139,9 @@ public class BookingService {
                                                    Screening screening,
                                                    List<Seat> seats,
                                                    Map<Long, PriceCategory> categoriesBySeat,
-                                                   Long screeningId,
-                                                   List<Long> seatIds) {
+                                                   BookingSeatSelectionRequest request) {
+        Long screeningId = request.screeningId();
+        List<Long> seatIds = extractSeatIds(request);
         User user = userRepository.findById(userId).orElseThrow();
         boolean discountEligible = birthdayDiscountService.isEligible(user.getBirthDate(), screening.getStartsAt());
         int discountPercent = discountEligible ? birthdayDiscountService.getPercent() : 0;
@@ -149,6 +157,13 @@ public class BookingService {
             total = total.add(applied);
             lines.add(new BookingSeatLineResponse(seat.getRowNum(), seat.getColNum(), seat.getSeatType().name(), applied));
         }
+        int promoPercent = promoCodeService.resolveDiscountPercent(request.promoCode());
+        BigDecimal promoAmount = BigDecimal.ZERO;
+        if (promoPercent > 0) {
+            promoAmount = total.multiply(BigDecimal.valueOf(promoPercent))
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            total = total.subtract(promoAmount);
+        }
         BigDecimal discountAmount = subtotal.subtract(total);
 
         Booking booking = new Booking();
@@ -157,6 +172,9 @@ public class BookingService {
         booking.setTotalPrice(total);
         booking.setStatus(BookingStatus.PENDING);
         booking.setBookingCode(generateUniqueBookingCode());
+        if (request.promoCode() != null && !request.promoCode().isBlank()) {
+            booking.setPromoCode(request.promoCode().trim().toUpperCase());
+        }
         bookingRepository.saveAndFlush(booking);
 
         for (int i = 0; i < seats.size(); i++) {
