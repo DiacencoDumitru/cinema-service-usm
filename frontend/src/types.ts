@@ -74,6 +74,7 @@ export interface BookingHistory {
   screeningStartsAt: string;
   hallName: string;
   totalPrice: string;
+  status: string;
   seats: { row: number; col: number; seatType: string; price: string }[];
 }
 
@@ -110,4 +111,5 @@ export interface AdminBookingRow {
   screeningStartsAt: string;
   hallName: string;
   totalPrice: string;
+  status: string;
 }

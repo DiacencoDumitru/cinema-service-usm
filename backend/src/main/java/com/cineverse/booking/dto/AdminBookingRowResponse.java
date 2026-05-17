@@ -9,6 +9,7 @@ public record AdminBookingRowResponse(
         String movieTitle,
         Instant screeningStartsAt,
         String hallName,
-        BigDecimal totalPrice
+        BigDecimal totalPrice,
+        String status
 ) {
 }
