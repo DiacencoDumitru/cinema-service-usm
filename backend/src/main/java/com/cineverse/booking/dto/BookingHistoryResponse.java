@@ -10,6 +10,7 @@ public record BookingHistoryResponse(
         Instant screeningStartsAt,
         String hallName,
         BigDecimal totalPrice,
+        String status,
         List<BookingSeatLineResponse> seats
 ) {
 }

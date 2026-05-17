@@ -544,8 +544,28 @@ function BookingsAdmin() {
       {q.isError && <p className="text-sm text-red-400">Eroare la încărcarea rezervărilor.</p>}
       <ul className="space-y-2 text-sm">
         {(q.data ?? []).map((b) => (
-          <li key={b.bookingId} className="rounded border border-slate-800 bg-slate-900 px-3 py-2">
-            #{b.bookingId} {b.userEmail} — {b.movieTitle} — {new Date(b.screeningStartsAt).toLocaleString('ro-RO')} — {b.totalPrice} MDL
+          <li key={b.bookingId} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
+            <span>
+              #{b.bookingId} {b.userEmail} — {b.movieTitle} —{' '}
+              {new Date(b.screeningStartsAt).toLocaleString('ro-RO')} — {b.totalPrice} MDL · {b.status}
+            </span>
+            {b.status === 'PAID' && new Date(b.screeningStartsAt).getTime() > Date.now() && (
+              <button
+                type="button"
+                className="text-red-400 hover:underline"
+                onClick={() =>
+                  void api
+                    .post(`/api/admin/bookings/${b.bookingId}/cancel`)
+                    .then(() => {
+                      toast.success('Rezervare anulată');
+                      void q.refetch();
+                    })
+                    .catch(() => toast.error('Eroare'))
+                }
+              >
+                Anulează
+              </button>
+            )}
           </li>
         ))}
       </ul>

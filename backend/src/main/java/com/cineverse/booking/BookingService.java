@@ -98,7 +98,7 @@ public class BookingService {
         }
 
         for (Long seatId : seatIds) {
-            if (bookingSeatRepository.existsBySeatId(seatId)) {
+            if (bookingSeatRepository.existsBySeatIdAndBooking_Status(seatId, BookingStatus.PAID)) {
                 seatLockService.releaseLocks(request.screeningId(), seatIds);
                 throw new ApiException(HttpStatus.CONFLICT, "Seat already booked");
             }
@@ -153,6 +153,23 @@ public class BookingService {
         );
     }
 
+    @Transactional
+    public void cancelBooking(Long userId, Long bookingId, boolean admin) {
+        Booking booking = bookingRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found"));
+        if (!admin && !booking.getUser().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Not your booking");
+        }
+        if (booking.getStatus() != BookingStatus.PAID) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Booking cannot be cancelled");
+        }
+        if (booking.getScreening().getStartsAt().isBefore(Instant.now())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Screening has already started");
+        }
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+    }
+
     public CursorPage<BookingHistoryResponse> listUserBookings(Long userId, String cursor, int limit) throws Exception {
         Long cursorId = CursorCodec.decodeId(cursor);
         List<Booking> rows = bookingRepository.findUserBookings(userId, cursorId, PageRequest.of(0, limit + 1));
@@ -191,7 +208,8 @@ public class BookingService {
                 s.getMovie().getTitle(),
                 s.getStartsAt(),
                 s.getHall().getName(),
-                b.getTotalPrice()
+                b.getTotalPrice(),
+                b.getStatus().name()
         );
     }
 
@@ -211,6 +229,7 @@ public class BookingService {
                 s.getStartsAt(),
                 s.getHall().getName(),
                 b.getTotalPrice(),
+                b.getStatus().name(),
                 seatLines
         );
     }
