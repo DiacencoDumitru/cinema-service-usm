@@ -1,0 +1,6 @@
+{
+  "emailInvalid": "Invalid email",
+  "dateFormat": "Expected format: YYYY-MM-DD",
+  "birthDatePast": "Birth date must be in the past",
+  "passwordMismatch": "Passwords do not match"
+}

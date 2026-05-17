@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { FetchBanner } from '../components/FetchBanner';
 import type { CursorPage, Movie } from '../types';
 import { MovieCarousel } from '../components/MovieCarousel';
 import { VideoStage } from '../components/VideoStage';
@@ -11,19 +13,8 @@ async function fetchMovies(status: string) {
   return data;
 }
 
-function FetchBanner({ tone, children }: { tone: 'load' | 'err'; children: React.ReactNode }) {
-  const cls =
-    tone === 'load'
-      ? 'border-slate-600 bg-slate-900/70 text-slate-300'
-      : 'border-amber-700/60 bg-amber-950/35 text-amber-100';
-  return (
-    <p className={`rounded-xl border px-4 py-3 text-sm ${cls}`} role="status">
-      {children}
-    </p>
-  );
-}
-
 export function Home() {
+  const { t } = useTranslation('home');
   const now = useQuery({
     queryKey: ['movies', 'NOW_SHOWING'],
     queryFn: () => fetchMovies('NOW_SHOWING'),
@@ -43,39 +34,31 @@ export function Home() {
 
   return (
     <div className="space-y-12">
-      {now.isPending && <FetchBanner tone="load">Se încarcă filmele din derulare…</FetchBanner>}
+      {now.isPending && <FetchBanner tone="load">{t('nowShowingLoad')}</FetchBanner>}
       {now.isError && (
         <FetchBanner tone="err">
-          Nu s-au putut încărca filmele din derulare. Verifică că backend-ul răspunde la /api/movies, că domeniul
-          aplicației este inclus în CORS (CORS_ORIGIN_* pe server) și, dacă API-ul e pe alt host, setează
-          VITE_API_URL la buildul frontend-ului.
+          {t('nowShowingError')}
           {axios.isAxiosError(now.error) && now.error.response?.status === 502 && (
-            <span className="mt-2 block border-t border-amber-600/40 pt-2 text-xs">
-              Răspuns 502 (Bad Gateway): de obicei nginx nu poate contacta backend-ul (încă pornește sau a căzut).
-              Cu Docker Compose: reconstruiește imaginile, apoi `docker compose up` — frontend-ul așteaptă acum
-              backend-ul sănătos înainte de a fi marcat „ready”.
-            </span>
+            <span className="mt-2 block border-t border-amber-600/40 pt-2 text-xs">{t('nowShowing502')}</span>
           )}
         </FetchBanner>
       )}
 
       {nowReady && <VideoStage movies={nowOrdered} />}
 
-      {nowReady && <MovieCarousel title="ÎN DERULARE" movies={nowOrdered} />}
+      {nowReady && <MovieCarousel title={t('carouselNowShowing')} movies={nowOrdered} />}
 
-      {soon.isPending && <FetchBanner tone="load">Se încarcă filmele din curând…</FetchBanner>}
+      {soon.isPending && <FetchBanner tone="load">{t('comingSoonLoad')}</FetchBanner>}
       {soon.isError && (
         <FetchBanner tone="err">
-          Nu s-au putut încărca filmele din curând. Aceleași verificări ca pentru secțiunea din derulare.
+          {t('comingSoonError')}
           {axios.isAxiosError(soon.error) && soon.error.response?.status === 502 && (
-            <span className="mt-2 block border-t border-amber-600/40 pt-2 text-xs">
-              Răspuns 502: vezi mesajul de mai sus pentru derulare (același gateway/backend).
-            </span>
+            <span className="mt-2 block border-t border-amber-600/40 pt-2 text-xs">{t('comingSoon502')}</span>
           )}
         </FetchBanner>
       )}
 
-      {soonReady && <MovieCarousel title="ÎN CURÂND" movies={soon.data?.items ?? []} />}
+      {soonReady && <MovieCarousel title={t('carouselComingSoon')} movies={soon.data?.items ?? []} />}
     </div>
   );
 }

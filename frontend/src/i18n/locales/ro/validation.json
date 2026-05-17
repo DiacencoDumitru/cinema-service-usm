@@ -1,0 +1,6 @@
+{
+  "emailInvalid": "Email invalid",
+  "dateFormat": "Format așteptat: AAAA-LL-ZZ",
+  "birthDatePast": "Data nașterii trebuie să fie în trecut",
+  "passwordMismatch": "Parolele nu coincid"
+}

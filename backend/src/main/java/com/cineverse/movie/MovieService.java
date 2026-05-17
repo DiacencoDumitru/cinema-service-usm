@@ -111,6 +111,7 @@ public class MovieService {
     private Movie fromRequest(Movie movie, MovieRequest request) {
         movie.setTitle(request.title());
         movie.setOriginalTitle(request.originalTitle());
+        movie.setTitleRu(request.titleRu());
         movie.setDurationMin(request.durationMin());
         movie.setFormats(nullToEmpty(request.formats()));
         movie.setLanguages(nullToEmpty(request.languages()));
@@ -135,6 +136,7 @@ public class MovieService {
                 m.getId(),
                 m.getTitle(),
                 m.getOriginalTitle(),
+                m.getTitleRu(),
                 m.getDurationMin(),
                 nullToEmpty(m.getFormats()),
                 nullToEmpty(m.getLanguages()),

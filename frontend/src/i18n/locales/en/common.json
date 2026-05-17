@@ -1,0 +1,42 @@
+{
+  "loading": "Loading…",
+  "retry": "Retry",
+  "sessionExpired": "Session expired. Please sign in again.",
+  "brand": "Aurora Cinema",
+  "companyName": "Aurora Cinema S.R.L.",
+  "mapTitle": "map",
+  "loadDataFailed": "Could not load data.",
+  "email": "Email",
+  "password": "Password",
+  "name": "Name",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "error": "Error",
+  "mdl": "MDL",
+  "row": "Row",
+  "seat": "seat",
+  "total": "Total",
+  "priceCategory": {
+    "STANDARD": "Standard",
+    "VIP": "VIP",
+    "CHILD": "Child",
+    "STUDENT": "Student"
+  },
+  "screeningFormat": {
+    "TWO_D": "2D",
+    "THREE_D": "3D"
+  },
+  "screeningLanguage": {
+    "RO": "RO",
+    "RU": "RU",
+    "EN": "EN"
+  },
+  "languageSwitcher": {
+    "label": "Interface language",
+    "ro": "RO",
+    "ru": "RU",
+    "en": "EN"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "nowShowingLoad": "Загрузка фильмов в прокате…",
+  "nowShowingError": "Не удалось загрузить фильмы в прокате. Проверьте, что backend отвечает на /api/movies, домен приложения включён в CORS (CORS_ORIGIN_* на сервере) и, если API на другом хосте, задайте VITE_API_URL при сборке frontend.",
+  "nowShowing502": "Ответ 502 (Bad Gateway): обычно nginx не может связаться с backend (ещё запускается или упал). В Docker Compose: пересоберите образы, затем `docker compose up` — frontend ждёт готовности backend.",
+  "comingSoonLoad": "Загрузка скоро в прокате…",
+  "comingSoonError": "Не удалось загрузить фильмы «скоро». Те же проверки, что для секции в прокате.",
+  "comingSoon502": "Ответ 502: см. сообщение выше для проката (тот же gateway/backend).",
+  "carouselNowShowing": "В ПРОКАТЕ",
+  "carouselComingSoon": "СКОРО",
+  "noMovies": "Нет фильмов.",
+  "carouselPrev": "Назад",
+  "carouselNext": "Вперёд"
+}

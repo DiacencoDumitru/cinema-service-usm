@@ -7,6 +7,8 @@ import java.util.List;
 public record BookingHistoryResponse(
         Long bookingId,
         String movieTitle,
+        String originalTitle,
+        String titleRu,
         Instant screeningStartsAt,
         String hallName,
         BigDecimal totalPrice,

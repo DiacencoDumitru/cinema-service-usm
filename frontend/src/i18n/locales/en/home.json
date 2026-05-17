@@ -1,0 +1,13 @@
+{
+  "nowShowingLoad": "Loading now showing films…",
+  "nowShowingError": "Could not load now showing films. Check that the backend responds at /api/movies, the app domain is allowed in CORS (CORS_ORIGIN_* on the server), and if the API is on another host, set VITE_API_URL when building the frontend.",
+  "nowShowing502": "502 response (Bad Gateway): nginx usually cannot reach the backend (still starting or down). With Docker Compose: rebuild images, then `docker compose up` — the frontend now waits for a healthy backend.",
+  "comingSoonLoad": "Loading coming soon films…",
+  "comingSoonError": "Could not load coming soon films. Same checks as for the now showing section.",
+  "comingSoon502": "502 response: see the message above for now showing (same gateway/backend).",
+  "carouselNowShowing": "NOW SHOWING",
+  "carouselComingSoon": "COMING SOON",
+  "noMovies": "No films.",
+  "carouselPrev": "Previous",
+  "carouselNext": "Next"
+}

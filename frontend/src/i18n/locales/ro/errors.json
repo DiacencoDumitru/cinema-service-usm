@@ -1,0 +1,13 @@
+{
+  "generic": "A apărut o eroare",
+  "unauthorized": "Neautorizat",
+  "forbidden": "Acces interzis",
+  "seatsUnavailable": "Unul sau mai multe locuri nu sunt disponibile",
+  "seatAlreadyBooked": "Locul este deja rezervat",
+  "selectAtLeastOneSeat": "Selectează cel puțin un loc",
+  "invalidTicketCategory": "Categorie de bilet invalidă",
+  "bookingCannotCancel": "Rezervarea nu poate fi anulată",
+  "screeningAlreadyStarted": "Proiecția a început deja",
+  "notYourBooking": "Nu este rezervarea ta",
+  "bookingNotFound": "Rezervare negăsită"
+}

@@ -1,0 +1,62 @@
+{
+  "contact": {
+    "title": "Contact",
+    "address": "Address: 132 Ștefan cel Mare și Sfânt Blvd., Chișinău",
+    "phone": "Phone: +373 22 000 000",
+    "email": "Email: contact@auroracinema.local",
+    "boxOffice": "Box office: daily 10:00 – 23:30"
+  },
+  "rules": {
+    "title": "House rules",
+    "lead": "These rules set the conditions for access and screenings at Aurora Cinema Chișinău. By purchasing a ticket or entering the cinema, visitors confirm they have read and accept these rules.",
+    "sections": [
+      {
+        "title": "1. Hall access",
+        "items": [
+          "Entry after the screening has started may only be allowed during breaks set by the cinema or at staff discretion, so as not to disturb other viewers.",
+          "Please present your ticket (physical or electronic) at the checkpoint. The ticket must be valid for the date, time, hall and film shown.",
+          "Seats are reserved according to the ticket. Changing seats without staff approval is not allowed if it affects the price category or other viewers' comfort."
+        ]
+      },
+      {
+        "title": "2. Tickets, prices and refunds",
+        "items": [
+          "Tickets are valid only for the date and time printed on the ticket or shown in your electronic account.",
+          "Refunds and changes follow the policy displayed at the box office and on the website, within applicable legal time limits. In exceptional cases (cinema-cancelled screening), viewers will be informed and may receive rescheduling or a refund per the announced procedure.",
+          "Discounts (students, children, etc.) are granted only upon presentation of valid documents at the checkpoint."
+        ]
+      },
+      {
+        "title": "3. Age limits and content",
+        "items": [
+          "Respect the age rating shown for each film. Access for minors below the recommended age may be refused in accordance with law and cinema policy.",
+          "For some screenings, staff may request ID to verify age. Refusing verification may lead to denied entry without refund if sale conditions provide for it."
+        ]
+      },
+      {
+        "title": "4. Behaviour in the hall",
+        "items": [
+          "Mobile phones and other devices must be set to silent mode or switched off for the duration of the screening.",
+          "Full or partial filming of the movie is prohibited, as is flash photography if it disturbs viewers or infringes copyright.",
+          "Please respect staff and other viewers: no aggressive behaviour or deliberate disturbance."
+        ]
+      },
+      {
+        "title": "5. Food and drinks",
+        "paragraph": "Consumption of outside food and drinks may be restricted or prohibited according to cinema policy and hygiene rules. Products bought in the cinema area are allowed where explicitly indicated."
+      },
+      {
+        "title": "6. Safety and personal belongings",
+        "items": [
+          "The cinema is not liable for items lost or left in the hall or common areas, except where required by law.",
+          "Entry with dangerous substances, weapons or items that endanger safety is prohibited. Staff may refuse entry in such cases."
+        ]
+      },
+      {
+        "title": "7. Force majeure and schedule changes",
+        "paragraph": "Aurora Cinema reserves the right to change the programme, replace films or cancel screenings for technical, legal or force majeure reasons. In such cases reasonable solutions will be offered to affected viewers (rescheduling, refund, etc.) according to conditions at the time of purchase."
+      }
+    ],
+    "footer": "Last updated: information may be completed at the box office or on the website. In case of discrepancy between versions, official documents communicated by Aurora Cinema Chișinău prevail."
+  }
+}

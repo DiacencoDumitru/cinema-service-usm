@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import type { SelectedSeat, TicketPriceCategory } from '../types';
+import type { MovieTitleFields } from '../utils/movieTitle';
 
 interface Draft {
   screeningId: number | null;
-  movieTitle: string | null;
+  movieTitles: MovieTitleFields | null;
   startsAt: string | null;
   hallName: string | null;
   format: string | null;
@@ -11,7 +12,7 @@ interface Draft {
   selectedSeats: SelectedSeat[];
   setScreening: (
     id: number,
-    movieTitle: string,
+    movieTitles: MovieTitleFields,
     startsAt: string,
     hallName: string,
     format: string,
@@ -25,16 +26,16 @@ interface Draft {
 
 export const useBookingDraftStore = create<Draft>((set, get) => ({
   screeningId: null,
-  movieTitle: null,
+  movieTitles: null,
   startsAt: null,
   hallName: null,
   format: null,
   basePrice: 0,
   selectedSeats: [],
-  setScreening: (screeningId, movieTitle, startsAt, hallName, format, basePrice) =>
+  setScreening: (screeningId, movieTitles, startsAt, hallName, format, basePrice) =>
     set({
       screeningId,
-      movieTitle,
+      movieTitles,
       startsAt,
       hallName,
       format,
@@ -60,7 +61,7 @@ export const useBookingDraftStore = create<Draft>((set, get) => ({
   reset: () =>
     set({
       screeningId: null,
-      movieTitle: null,
+      movieTitles: null,
       startsAt: null,
       hallName: null,
       format: null,

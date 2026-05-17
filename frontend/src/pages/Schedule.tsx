@@ -1,8 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { api } from '../api/client';
 import { FetchBanner, QueryErrorRetry } from '../components/FetchBanner';
+import { useAppLocale } from '../hooks/useAppLocale';
+import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
 import type { CursorPage, Movie, ScreeningRow } from '../types';
 import { formatLabel } from '../utils/labels';
 
@@ -29,20 +33,16 @@ function formatDdMm(d: Date) {
   return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}`;
 }
 
-function labelForDayIndex(i: number, d: Date) {
-  if (i === 0) return 'ASTĂZI';
-  if (i === 1) return 'MÂINE';
+function labelForDayIndex(t: TFunction, i: number, d: Date) {
+  if (i === 0) return t('schedule:today');
+  if (i === 1) return t('schedule:tomorrow');
   return formatDdMm(d);
 }
 
-function formatReleaseDate(iso: string | null) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
 export function Schedule() {
+  const { t } = useTranslation(['schedule', 'common']);
+  const { formatDate, formatTime, intlLocale } = useAppLocale();
+  const displayTitle = useMovieDisplayTitle();
   const [dayIdx, setDayIdx] = useState(0);
   const [selectedScreeningId, setSelectedScreeningId] = useState<number | null>(null);
   const [genre, setGenre] = useState('');
@@ -100,14 +100,14 @@ export function Schedule() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Program</h1>
+      <h1 className="text-3xl font-bold">{t('schedule:title')}</h1>
 
       <div className="flex flex-wrap items-center gap-2">
         <span
           className="rounded-full border border-emerald-600/80 bg-emerald-900/40 px-4 py-2 text-sm font-semibold text-emerald-100"
-          title="Locație"
+          title={t('schedule:locationTitle')}
         >
-          Aurora Cinema Chișinău
+          {t('schedule:location')}
         </span>
       </div>
 
@@ -125,7 +125,7 @@ export function Schedule() {
                   : 'border-slate-600 bg-slate-900/60 text-slate-300 hover:border-slate-500 hover:bg-slate-800/80'
               }`}
             >
-              <span className="block leading-tight">{labelForDayIndex(i, d)}</span>
+              <span className="block leading-tight">{labelForDayIndex(t, i, d)}</span>
               {i <= 1 ? (
                 <span
                   className={`mt-0.5 block text-[10px] font-normal normal-case sm:text-xs ${
@@ -140,7 +140,7 @@ export function Schedule() {
                     active ? 'text-emerald-100/90' : 'text-slate-400'
                   }`}
                 >
-                  {d.toLocaleDateString('ro-RO', { weekday: 'short' })}
+                  {d.toLocaleDateString(intlLocale, { weekday: 'short' })}
                 </span>
               )}
             </button>
@@ -151,7 +151,7 @@ export function Schedule() {
       <div className="flex flex-wrap gap-4">
         <input
           className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
-          placeholder="Gen (ex: Dramă,SF) — separate prin virgulă"
+          placeholder={t('schedule:genrePlaceholder')}
           value={genre}
           onChange={(e) => setGenre(e.target.value)}
         />
@@ -160,24 +160,23 @@ export function Schedule() {
           value={language ?? ''}
           onChange={(e) => setLanguage(e.target.value || undefined)}
         >
-          <option value="">Toate limbile</option>
+          <option value="">{t('schedule:allLanguages')}</option>
           <option value="RO">RO</option>
           <option value="RU">RU</option>
           <option value="EN">EN</option>
         </select>
       </div>
 
-      {q.isPending && <FetchBanner tone="load">Se încarcă programul…</FetchBanner>}
+      {q.isPending && <FetchBanner tone="load">{t('schedule:loading')}</FetchBanner>}
       {q.isError && (
-        <QueryErrorRetry message="Nu s-a putut încărca programul." onRetry={() => void q.refetch()} />
+        <QueryErrorRetry message={t('schedule:loadFailed')} onRetry={() => void q.refetch()} />
       )}
       {q.isSuccess && (
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-start">
         <div className="min-w-0 space-y-2">
           {sortedItems.map((row) => {
             const active = row.screeningId === selectedScreeningId;
-            const start = new Date(row.startsAt);
-            const timeStr = start.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+            const timeStr = formatTime(row.startsAt, { hour: '2-digit', minute: '2-digit' });
             return (
               <button
                 key={row.screeningId}
@@ -192,7 +191,7 @@ export function Schedule() {
                 <span className="w-14 shrink-0 text-base font-bold tabular-nums text-slate-100">{timeStr}</span>
                 <div className="min-w-0 flex-1">
                   <span className="font-semibold text-slate-100">
-                    {row.title}
+                    {displayTitle(row)}
                     <span className="font-normal text-slate-400"> ({row.language})</span>
                   </span>
                   <p className="text-sm text-slate-500">{row.hallName}</p>
@@ -202,20 +201,20 @@ export function Schedule() {
                   to={`/rezervare/${row.screeningId}`}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Locuri
+                  {t('schedule:seats')}
                 </Link>
               </button>
             );
           })}
           {sortedItems.length === 0 && (
-            <p className="text-slate-500">Nu există seanse pentru această zi.</p>
+            <p className="text-slate-500">{t('schedule:noScreenings')}</p>
           )}
         </div>
 
         <aside className="lg:sticky lg:top-24">
           {selectedRow == null ? (
             <div className="rounded-lg border border-dashed border-slate-700 bg-slate-900/30 p-6 text-center text-sm text-slate-500">
-              Selectați o seansă din listă.
+              {t('schedule:selectScreening')}
             </div>
           ) : (
             <div
@@ -232,54 +231,68 @@ export function Schedule() {
                   className="text-lg font-bold text-rose-400 hover:underline"
                   to={`/film/${selectedRow.movieId}`}
                 >
-                  {selectedRow.title}
+                  {displayTitle(selectedRow)}
                 </Link>
               </div>
 
-              {movieQ.isLoading && <p className="text-sm text-slate-500">Se încarcă detaliile…</p>}
+              {movieQ.isLoading && <p className="text-sm text-slate-500">{t('schedule:loadingDetails')}</p>}
               {movieQ.isError && (
-                <p className="text-sm text-amber-500">Detaliile filmului nu au putut fi încărcate.</p>
+                <p className="text-sm text-amber-500">{t('schedule:detailsFailed')}</p>
               )}
               {movieQ.data && (
                 <dl className="space-y-2 text-sm">
                   <div>
-                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Gen</dt>
+                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:genre')}</dt>
                     <dd className="text-slate-200">{movieQ.data.genres.join(', ')}</dd>
                   </div>
                   <div>
-                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Audio</dt>
+                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:audio')}</dt>
                     <dd className="text-slate-200">
                       {selectedRow.language}
                       {movieQ.data.languages.length ? (
-                        <span className="text-slate-500"> · disponibil: {movieQ.data.languages.join(', ')}</span>
+                        <span className="text-slate-500">
+                          {' '}
+                          · {t('schedule:availableLanguages')}: {movieQ.data.languages.join(', ')}
+                        </span>
                       ) : null}
                     </dd>
                   </div>
                   <div>
-                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Limită de vârstă</dt>
+                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:ageLimit')}</dt>
                     <dd className="text-slate-200">{selectedRow.ageRating ?? movieQ.data.ageRating ?? '—'}</dd>
                   </div>
                   <div>
-                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Durată</dt>
+                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:duration')}</dt>
                     <dd className="text-slate-200">
-                      {Math.floor(movieQ.data.durationMin / 60)} h {movieQ.data.durationMin % 60} min
+                      {t('schedule:durationHours', {
+                        hours: Math.floor(movieQ.data.durationMin / 60),
+                        minutes: movieQ.data.durationMin % 60,
+                      })}
                     </dd>
                   </div>
                   <div>
-                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Dată lansare</dt>
-                    <dd className="text-slate-200">{formatReleaseDate(movieQ.data.releaseDate)}</dd>
+                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:releaseDate')}</dt>
+                    <dd className="text-slate-200">
+                      {movieQ.data.releaseDate
+                        ? formatDate(movieQ.data.releaseDate, {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </dd>
                   </div>
                   <div>
-                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Format</dt>
-                    <dd className="text-slate-200">{formatLabel(selectedRow.format)}</dd>
+                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:format')}</dt>
+                    <dd className="text-slate-200">{formatLabel(t, selectedRow.format)}</dd>
                   </div>
                   <div>
-                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">Actori</dt>
+                    <dt className="font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:actors')}</dt>
                     <dd className="text-slate-200">{movieQ.data.actors.join(', ') || '—'}</dd>
                   </div>
                   {movieQ.data.synopsis && (
                     <div className="border-t border-slate-800 pt-3">
-                      <dt className="mb-1 font-bold uppercase tracking-wide text-emerald-600/90">Descriere</dt>
+                      <dt className="mb-1 font-bold uppercase tracking-wide text-emerald-600/90">{t('schedule:description')}</dt>
                       <dd className="text-slate-300 leading-relaxed">{movieQ.data.synopsis}</dd>
                     </div>
                   )}

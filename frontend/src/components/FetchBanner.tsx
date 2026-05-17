@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 export function FetchBanner({ tone, children }: { tone: 'load' | 'err'; children: React.ReactNode }) {
@@ -13,6 +14,7 @@ export function FetchBanner({ tone, children }: { tone: 'load' | 'err'; children
 }
 
 export function QueryErrorRetry({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useTranslation('common');
   return (
     <div className="space-y-3">
       <FetchBanner tone="err">{message}</FetchBanner>
@@ -21,7 +23,7 @@ export function QueryErrorRetry({ message, onRetry }: { message: string; onRetry
         onClick={onRetry}
         className="rounded bg-rose-600 px-3 py-1.5 text-sm text-white hover:bg-rose-500"
       >
-        Reîncearcă
+        {t('retry')}
       </button>
     </div>
   );
@@ -36,11 +38,10 @@ export function AdminQueryList<T>({
   emptyMessage: string;
   children: (data: T) => React.ReactNode;
 }) {
-  if (query.isPending) return <FetchBanner tone="load">Se încarcă…</FetchBanner>;
+  const { t } = useTranslation('common');
+  if (query.isPending) return <FetchBanner tone="load">{t('loading')}</FetchBanner>;
   if (query.isError) {
-    return (
-      <QueryErrorRetry message="Nu s-au putut încărca datele." onRetry={() => void query.refetch()} />
-    );
+    return <QueryErrorRetry message={t('loadDataFailed')} onRetry={() => void query.refetch()} />;
   }
   if (!query.data) return null;
   const isEmpty = Array.isArray(query.data) && query.data.length === 0;

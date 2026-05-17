@@ -1,0 +1,13 @@
+{
+  "generic": "Произошла ошибка",
+  "unauthorized": "Не авторизован",
+  "forbidden": "Доступ запрещён",
+  "seatsUnavailable": "Одно или несколько мест недоступны",
+  "seatAlreadyBooked": "Место уже забронировано",
+  "selectAtLeastOneSeat": "Выберите хотя бы одно место",
+  "invalidTicketCategory": "Недопустимая категория билета",
+  "bookingCannotCancel": "Бронирование нельзя отменить",
+  "screeningAlreadyStarted": "Сеанс уже начался",
+  "notYourBooking": "Это не ваше бронирование",
+  "bookingNotFound": "Бронирование не найдено"
+}

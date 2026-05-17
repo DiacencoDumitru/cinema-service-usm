@@ -1,0 +1,42 @@
+{
+  "loading": "Se încarcă…",
+  "retry": "Reîncearcă",
+  "sessionExpired": "Sesiune expirată. Autentifică-te din nou.",
+  "brand": "Aurora Cinema",
+  "companyName": "Aurora Cinema S.R.L.",
+  "mapTitle": "hartă",
+  "loadDataFailed": "Nu s-au putut încărca datele.",
+  "email": "Email",
+  "password": "Parolă",
+  "name": "Nume",
+  "save": "Salvează",
+  "delete": "Șterge",
+  "edit": "Editează",
+  "add": "Adaugă",
+  "error": "Eroare",
+  "mdl": "MDL",
+  "row": "Rând",
+  "seat": "loc",
+  "total": "Total",
+  "priceCategory": {
+    "STANDARD": "Standard",
+    "VIP": "VIP",
+    "CHILD": "Copil",
+    "STUDENT": "Student"
+  },
+  "screeningFormat": {
+    "TWO_D": "2D",
+    "THREE_D": "3D"
+  },
+  "screeningLanguage": {
+    "RO": "RO",
+    "RU": "RU",
+    "EN": "EN"
+  },
+  "languageSwitcher": {
+    "label": "Limba interfeței",
+    "ro": "RO",
+    "ru": "RU",
+    "en": "EN"
+  }
+}

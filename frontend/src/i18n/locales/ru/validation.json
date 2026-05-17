@@ -1,0 +1,6 @@
+{
+  "emailInvalid": "Некорректный email",
+  "dateFormat": "Ожидаемый формат: ГГГГ-ММ-ДД",
+  "birthDatePast": "Дата рождения должна быть в прошлом",
+  "passwordMismatch": "Пароли не совпадают"
+}

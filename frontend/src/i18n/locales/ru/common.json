@@ -1,0 +1,42 @@
+{
+  "loading": "Загрузка…",
+  "retry": "Повторить",
+  "sessionExpired": "Сессия истекла. Войдите снова.",
+  "brand": "Aurora Cinema",
+  "companyName": "Aurora Cinema S.R.L.",
+  "mapTitle": "карта",
+  "loadDataFailed": "Не удалось загрузить данные.",
+  "email": "Email",
+  "password": "Пароль",
+  "name": "Имя",
+  "save": "Сохранить",
+  "delete": "Удалить",
+  "edit": "Редактировать",
+  "add": "Добавить",
+  "error": "Ошибка",
+  "mdl": "MDL",
+  "row": "Ряд",
+  "seat": "место",
+  "total": "Итого",
+  "priceCategory": {
+    "STANDARD": "Стандарт",
+    "VIP": "VIP",
+    "CHILD": "Детский",
+    "STUDENT": "Студенческий"
+  },
+  "screeningFormat": {
+    "TWO_D": "2D",
+    "THREE_D": "3D"
+  },
+  "screeningLanguage": {
+    "RO": "RO",
+    "RU": "RU",
+    "EN": "EN"
+  },
+  "languageSwitcher": {
+    "label": "Язык интерфейса",
+    "ro": "RO",
+    "ru": "RU",
+    "en": "EN"
+  }
+}

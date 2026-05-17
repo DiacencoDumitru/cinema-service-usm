@@ -30,6 +30,9 @@ public class Movie {
     @Column(name = "original_title", length = 500)
     private String originalTitle;
 
+    @Column(name = "title_ru", length = 500)
+    private String titleRu;
+
     @Column(name = "duration_min", nullable = false)
     private int durationMin;
 
@@ -98,6 +101,14 @@ public class Movie {
 
     public void setOriginalTitle(String originalTitle) {
         this.originalTitle = originalTitle;
+    }
+
+    public String getTitleRu() {
+        return titleRu;
+    }
+
+    public void setTitleRu(String titleRu) {
+        this.titleRu = titleRu;
     }
 
     public int getDurationMin() {

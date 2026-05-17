@@ -12,6 +12,7 @@ import java.util.List;
 public record MovieRequest(
         @NotBlank @Size(max = 500) String title,
         @Size(max = 500) String originalTitle,
+        @Size(max = 500) String titleRu,
         @NotNull @Positive int durationMin,
         List<@NotBlank @Size(max = 16) String> formats,
         List<@NotBlank @Size(max = 32) String> languages,

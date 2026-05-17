@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import i18n from '../i18n';
 import { useAuthStore } from '../stores/authStore';
 
 export const api = axios.create({
@@ -22,7 +23,7 @@ api.interceptors.response.use(
       const { token, logout } = useAuthStore.getState();
       if (token) {
         logout();
-        toast.error('Sesiune expirată. Autentifică-te din nou.');
+        toast.error(i18n.t('common:sessionExpired'));
         if (window.location.pathname !== '/login') {
           window.location.assign('/login');
         }
