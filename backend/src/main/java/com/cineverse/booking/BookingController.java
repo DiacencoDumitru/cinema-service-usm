@@ -5,6 +5,7 @@ import com.cineverse.booking.dto.BookingPaidResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,5 +31,11 @@ public class BookingController {
     public BookingPaidResponse pay(@AuthenticationPrincipal UserPrincipal principal,
                                    @Valid @RequestBody BookingSeatSelectionRequest request) {
         return bookingService.pay(principal.getUserId(), request);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public void cancel(@AuthenticationPrincipal UserPrincipal principal,
+                       @PathVariable Long id) {
+        bookingService.cancelBooking(principal.getUserId(), id, false);
     }
 }
