@@ -8,6 +8,10 @@ import java.util.Collection;
 
 public interface BookingSeatRepository extends JpaRepository<BookingSeat, BookingSeatId> {
 
+    boolean existsBySeatId(Long seatId);
+
+    void deleteByBooking_Id(Long bookingId);
+
     boolean existsBySeatIdAndBooking_Status(Long seatId, BookingStatus status);
 
     @Query("""

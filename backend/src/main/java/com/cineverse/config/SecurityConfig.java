@@ -1,6 +1,7 @@
 package com.cineverse.config;
 
 import com.cineverse.auth.JwtAuthFilter;
+import com.cineverse.security.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,15 +24,18 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final CineverseProperties cineverseProperties;
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          RateLimitFilter rateLimitFilter,
                           CineverseProperties cineverseProperties,
                           JsonAuthenticationEntryPoint authenticationEntryPoint,
                           JsonAccessDeniedHandler accessDeniedHandler) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.rateLimitFilter = rateLimitFilter;
         this.cineverseProperties = cineverseProperties;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
@@ -72,7 +76,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/sessions").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/sessions/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/bookings").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/bookings", "/api/admin/bookings/export")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/analytics/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/admin/bookings/*/cancel").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").authenticated()
                         .requestMatchers(HttpMethod.POST,
@@ -82,6 +88,7 @@ public class SecurityConfig {
                                 "/api/bookings/*/cancel").authenticated()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

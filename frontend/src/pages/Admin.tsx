@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
 import { AdminQueryList } from '../components/FetchBanner';
+import { AdminAnalytics } from '../components/AdminAnalytics';
 import { useAppLocale } from '../hooks/useAppLocale';
 import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
 import type { AdminBookingRow, CursorPage, Hall, Movie, ScreeningRow } from '../types';
@@ -40,6 +41,9 @@ export function Admin() {
         <NavLink to="/admin/bookings" className={navCls}>
           {t('bookings')}
         </NavLink>
+        <NavLink to="/admin/analytics" className={navCls}>
+          {t('analytics')}
+        </NavLink>
       </nav>
       <Routes>
         <Route index element={<Navigate to="movies" replace />} />
@@ -47,6 +51,7 @@ export function Admin() {
         <Route path="halls" element={<HallsAdmin />} />
         <Route path="sessions" element={<SessionsAdmin />} />
         <Route path="bookings" element={<BookingsAdmin />} />
+        <Route path="analytics" element={<AdminAnalytics />} />
       </Routes>
     </div>
   );
@@ -566,6 +571,31 @@ function BookingsAdmin() {
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
         />
+        <button
+          type="button"
+          className="rounded border border-slate-600 px-3 py-2 text-sm hover:bg-slate-800"
+          onClick={() => {
+            void api
+              .get('/api/admin/bookings/export', {
+                params: {
+                  ...(movieFilter !== '' ? { movieId: movieFilter } : {}),
+                  ...(dateFilter ? { date: dateFilter } : {}),
+                },
+                responseType: 'text',
+              })
+              .then(({ data }) => {
+                const blob = new Blob([data], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'bookings.csv';
+                a.click();
+                URL.revokeObjectURL(a.href);
+              })
+              .catch(() => toast.error(t('common:error')));
+          }}
+        >
+          {t('admin:exportCsv')}
+        </button>
       </div>
       {q.isPending && <p className="text-sm text-slate-400">{t('admin:loadingBookings')}</p>}
       {q.isError && <p className="text-sm text-red-400">{t('admin:loadBookingsFailed')}</p>}

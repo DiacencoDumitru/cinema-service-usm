@@ -28,11 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,8 +42,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
-
-    private static final Set<BookingStatus> BLOCKING_STATUSES = EnumSet.of(BookingStatus.PAID, BookingStatus.PENDING);
 
     private final BookingRepository bookingRepository;
     private final BookingSeatRepository bookingSeatRepository;
@@ -85,6 +83,9 @@ public class BookingService {
         validateSeatSelection(screening, seatIds);
         validatePriceCategories(request);
         long ttl = cineverseProperties.getSeatLockTtlSeconds();
+        if (seatLockService.locksHeldByUser(request.screeningId(), userId, seatIds)) {
+            return new SeatLockResponse(Instant.now().plusSeconds(ttl), ttl);
+        }
         if (!seatLockService.tryAcquireAll(request.screeningId(), userId, seatIds, ttl)) {
             throw new ApiException(HttpStatus.CONFLICT, "One or more seats are not available");
         }
@@ -108,7 +109,7 @@ public class BookingService {
         }
 
         for (Long seatId : seatIds) {
-            if (bookingSeatRepository.existsBySeatIdAndBooking_StatusIn(seatId, BLOCKING_STATUSES)) {
+            if (bookingSeatRepository.existsBySeatId(seatId)) {
                 seatLockService.releaseLocks(request.screeningId(), seatIds);
                 throw new ApiException(HttpStatus.CONFLICT, "Seat already booked");
             }
@@ -201,12 +202,17 @@ public class BookingService {
                         bs.getSeat().getSeatType().name(),
                         bs.getPrice()))
                 .collect(Collectors.toList());
-        BigDecimal subtotal = lines.stream()
+        BigDecimal linesTotal = lines.stream()
                 .map(BookingSeatLineResponse::price)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         User user = booking.getUser();
         boolean discountEligible = birthdayDiscountService.isEligible(user.getBirthDate(), screening.getStartsAt());
         int discountPercent = discountEligible ? birthdayDiscountService.getPercent() : 0;
+        BigDecimal subtotal = linesTotal;
+        if (discountEligible && discountPercent > 0) {
+            subtotal = linesTotal.multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(100 - discountPercent), 2, RoundingMode.HALF_UP);
+        }
         BigDecimal discountAmount = subtotal.subtract(total).max(BigDecimal.ZERO);
         return toPaidResponse(booking, screening, subtotal, discountPercent, discountAmount, total, lines);
     }
@@ -251,6 +257,7 @@ public class BookingService {
         }
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+        bookingSeatRepository.deleteByBooking_Id(bookingId);
     }
 
     public CursorPage<BookingHistoryResponse> listUserBookings(Long userId, String cursor, int limit) throws Exception {
@@ -293,6 +300,21 @@ public class BookingService {
                 booking.getStatus().name(),
                 seatLines
         );
+    }
+
+    public String exportAdminBookingsCsv(Long movieId, LocalDate date) throws Exception {
+        CursorPage<AdminBookingRowResponse> page = listAdminBookings(movieId, date, null, 10_000);
+        StringBuilder sb = new StringBuilder("bookingId,userEmail,movie,screeningAt,hall,total,status\n");
+        for (AdminBookingRowResponse row : page.items()) {
+            sb.append(row.bookingId()).append(',')
+                    .append(csvEscape(row.userEmail())).append(',')
+                    .append(csvEscape(row.movieTitle())).append(',')
+                    .append(row.screeningStartsAt()).append(',')
+                    .append(csvEscape(row.hallName())).append(',')
+                    .append(row.totalPrice()).append(',')
+                    .append(row.status()).append('\n');
+        }
+        return sb.toString();
     }
 
     public CursorPage<AdminBookingRowResponse> listAdminBookings(Long movieId, LocalDate date, String cursor, int limit)
@@ -382,7 +404,7 @@ public class BookingService {
         if (unique.size() != seatIds.size()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Duplicate seats");
         }
-        List<Seat> seats = seatRepository.findByIdIn(seatIds);
+        List<Seat> seats = seatRepository.findByIdInWithHall(seatIds);
         if (seats.size() != seatIds.size()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid seat id");
         }
@@ -415,5 +437,15 @@ public class BookingService {
             }
         }
         throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not generate booking code");
+    }
+
+    private static String csvEscape(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 }

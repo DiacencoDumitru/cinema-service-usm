@@ -147,8 +147,7 @@ public class ScreeningService {
         List<ScreeningSeatResponse> out = new ArrayList<>();
         for (Seat seat : seats) {
             String status;
-            if (bookingSeatRepository.existsBySeatIdAndBooking_StatusIn(
-                    seat.getId(), java.util.EnumSet.of(BookingStatus.PAID, BookingStatus.PENDING))) {
+            if (bookingSeatRepository.existsBySeatId(seat.getId())) {
                 status = "BOOKED";
             } else {
                 String owner = seatLockService.lockOwner(screeningId, seat.getId());
