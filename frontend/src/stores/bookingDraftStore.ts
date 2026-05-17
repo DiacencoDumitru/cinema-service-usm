@@ -9,7 +9,9 @@ interface Draft {
   hallName: string | null;
   format: string | null;
   basePrice: number;
+  lockExpiresAt: string | null;
   selectedSeats: SelectedSeat[];
+  setLockExpiresAt: (expiresAt: string | null) => void;
   setScreening: (
     id: number,
     movieTitles: MovieTitleFields,
@@ -31,7 +33,9 @@ export const useBookingDraftStore = create<Draft>((set, get) => ({
   hallName: null,
   format: null,
   basePrice: 0,
+  lockExpiresAt: null,
   selectedSeats: [],
+  setLockExpiresAt: (lockExpiresAt) => set({ lockExpiresAt }),
   setScreening: (screeningId, movieTitles, startsAt, hallName, format, basePrice) =>
     set({
       screeningId,
@@ -66,6 +70,7 @@ export const useBookingDraftStore = create<Draft>((set, get) => ({
       hallName: null,
       format: null,
       basePrice: 0,
+      lockExpiresAt: null,
       selectedSeats: [],
     }),
 }));

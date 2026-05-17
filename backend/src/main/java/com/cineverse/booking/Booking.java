@@ -43,6 +43,9 @@ public class Booking {
     @Column(nullable = false)
     private BookingStatus status;
 
+    @Column(name = "booking_code", nullable = false, length = 16, unique = true)
+    private String bookingCode;
+
     @Column(name = "promo_code", length = 32)
     private String promoCode;
 
@@ -109,6 +112,14 @@ public class Booking {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getBookingCode() {
+        return bookingCode;
+    }
+
+    public void setBookingCode(String bookingCode) {
+        this.bookingCode = bookingCode;
     }
 
     public List<BookingSeat> getSeats() {

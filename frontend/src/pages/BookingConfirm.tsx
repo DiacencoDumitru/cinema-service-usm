@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
+import { LockCountdownBanner } from '../components/LockCountdownBanner';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import type { BookingPaid } from '../types';
 import { categoryLabel } from '../utils/labels';
@@ -34,16 +35,19 @@ export function BookingConfirm() {
 
   const pay = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post<BookingPaid>(
+      const { data: pending } = await api.post<BookingPaid>(
         '/api/bookings',
         bookingSeatsPayload(screeningId, selectedSeats, promoCode),
       );
-      return data;
+      const { data: paid } = await api.post<BookingPaid>(
+        `/api/bookings/${pending.bookingId}/confirm-payment`,
+      );
+      return paid;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success(t('booking:paySuccess'));
       reset();
-      nav('/bilete');
+      nav(`/bilete/${data.bookingId}`);
     },
     onError: () => toast.error(t('booking:payFailed')),
   });
@@ -54,6 +58,7 @@ export function BookingConfirm() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
+      <LockCountdownBanner />
       <h1 className="text-2xl font-bold">{t('booking:confirmOrder')}</h1>
       <div className="rounded-lg border border-slate-800 bg-slate-900 p-4 text-sm">
         <p>

@@ -8,11 +8,13 @@ import com.cineverse.hall.Seat;
 import com.cineverse.hall.SeatRepository;
 import com.cineverse.hall.SeatType;
 import com.cineverse.booking.dto.AdminBookingRowResponse;
+import com.cineverse.booking.dto.BookingDetailResponse;
 import com.cineverse.booking.dto.BookingHistoryResponse;
 import com.cineverse.booking.dto.BookingPaidResponse;
 import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatLineResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
+import com.cineverse.booking.dto.SeatLockResponse;
 import com.cineverse.promo.PromoCodeService;
 import com.cineverse.price.PriceCategory;
 import com.cineverse.price.PriceRuleRepository;
@@ -30,6 +32,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +42,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
+
+    private static final Set<BookingStatus> BLOCKING_STATUSES = EnumSet.of(BookingStatus.PAID, BookingStatus.PENDING);
 
     private final BookingRepository bookingRepository;
     private final BookingSeatRepository bookingSeatRepository;
@@ -73,7 +78,7 @@ public class BookingService {
         this.promoCodeService = promoCodeService;
     }
 
-    public void lockSeats(Long userId, BookingSeatSelectionRequest request) {
+    public SeatLockResponse lockSeats(Long userId, BookingSeatSelectionRequest request) {
         Screening screening = screeningRepository.findByIdWithMovieAndHall(request.screeningId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Screening not found"));
         List<Long> seatIds = extractSeatIds(request);
@@ -83,10 +88,11 @@ public class BookingService {
         if (!seatLockService.tryAcquireAll(request.screeningId(), userId, seatIds, ttl)) {
             throw new ApiException(HttpStatus.CONFLICT, "One or more seats are not available");
         }
+        return new SeatLockResponse(Instant.now().plusSeconds(ttl), ttl);
     }
 
     @Transactional
-    public BookingPaidResponse pay(Long userId, BookingSeatSelectionRequest request) {
+    public BookingPaidResponse createPendingBooking(Long userId, BookingSeatSelectionRequest request) {
         Screening screening = screeningRepository.findByIdWithMovieAndHall(request.screeningId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Screening not found"));
         validatePriceCategories(request);
@@ -102,12 +108,40 @@ public class BookingService {
         }
 
         for (Long seatId : seatIds) {
-            if (bookingSeatRepository.existsBySeatIdAndBooking_Status(seatId, BookingStatus.PAID)) {
+            if (bookingSeatRepository.existsBySeatIdAndBooking_StatusIn(seatId, BLOCKING_STATUSES)) {
                 seatLockService.releaseLocks(request.screeningId(), seatIds);
                 throw new ApiException(HttpStatus.CONFLICT, "Seat already booked");
             }
         }
 
+        return savePendingBooking(userId, screening, seats, categoriesBySeat, request);
+    }
+
+    @Transactional
+    public BookingPaidResponse confirmPayment(Long userId, Long bookingId) {
+        Booking booking = bookingRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found"));
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Not your booking");
+        }
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Booking is not awaiting payment");
+        }
+        booking.setStatus(BookingStatus.PAID);
+        bookingRepository.save(booking);
+        if (booking.getPromoCode() != null) {
+            promoCodeService.consume(booking.getPromoCode());
+        }
+        return toPaidResponse(booking);
+    }
+
+    private BookingPaidResponse savePendingBooking(Long userId,
+                                                   Screening screening,
+                                                   List<Seat> seats,
+                                                   Map<Long, PriceCategory> categoriesBySeat,
+                                                   BookingSeatSelectionRequest request) {
+        Long screeningId = request.screeningId();
+        List<Long> seatIds = extractSeatIds(request);
         User user = userRepository.findById(userId).orElseThrow();
         boolean discountEligible = birthdayDiscountService.isEligible(user.getBirthDate(), screening.getStartsAt());
         int discountPercent = discountEligible ? birthdayDiscountService.getPercent() : 0;
@@ -136,15 +170,12 @@ public class BookingService {
         booking.setUser(user);
         booking.setScreening(screening);
         booking.setTotalPrice(total);
-        booking.setStatus(BookingStatus.PAID);
+        booking.setStatus(BookingStatus.PENDING);
+        booking.setBookingCode(generateUniqueBookingCode());
         if (request.promoCode() != null && !request.promoCode().isBlank()) {
             booking.setPromoCode(request.promoCode().trim().toUpperCase());
         }
         bookingRepository.saveAndFlush(booking);
-
-        if (booking.getPromoCode() != null) {
-            promoCodeService.consume(booking.getPromoCode());
-        }
 
         for (int i = 0; i < seats.size(); i++) {
             Seat seat = seats.get(i);
@@ -156,11 +187,41 @@ public class BookingService {
             bookingSeatRepository.save(bs);
         }
 
-        seatLockService.releaseLocks(request.screeningId(), seatIds);
+        seatLockService.releaseLocks(screeningId, seatIds);
+        return toPaidResponse(booking, screening, subtotal, discountPercent, discountAmount, total, lines);
+    }
 
+    private BookingPaidResponse toPaidResponse(Booking booking) {
+        Screening screening = booking.getScreening();
+        BigDecimal total = booking.getTotalPrice();
+        List<BookingSeatLineResponse> lines = booking.getSeats().stream()
+                .map(bs -> new BookingSeatLineResponse(
+                        bs.getSeat().getRowNum(),
+                        bs.getSeat().getColNum(),
+                        bs.getSeat().getSeatType().name(),
+                        bs.getPrice()))
+                .collect(Collectors.toList());
+        BigDecimal subtotal = lines.stream()
+                .map(BookingSeatLineResponse::price)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        User user = booking.getUser();
+        boolean discountEligible = birthdayDiscountService.isEligible(user.getBirthDate(), screening.getStartsAt());
+        int discountPercent = discountEligible ? birthdayDiscountService.getPercent() : 0;
+        BigDecimal discountAmount = subtotal.subtract(total).max(BigDecimal.ZERO);
+        return toPaidResponse(booking, screening, subtotal, discountPercent, discountAmount, total, lines);
+    }
+
+    private BookingPaidResponse toPaidResponse(Booking booking,
+                                             Screening screening,
+                                             BigDecimal subtotal,
+                                             int discountPercent,
+                                             BigDecimal discountAmount,
+                                             BigDecimal total,
+                                             List<BookingSeatLineResponse> lines) {
         var movie = screening.getMovie();
         return new BookingPaidResponse(
                 booking.getId(),
+                booking.getBookingCode(),
                 movie.getTitle(),
                 movie.getOriginalTitle(),
                 movie.getTitleRu(),
@@ -181,10 +242,11 @@ public class BookingService {
         if (!admin && !booking.getUser().getId().equals(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Not your booking");
         }
-        if (booking.getStatus() != BookingStatus.PAID) {
+        if (booking.getStatus() != BookingStatus.PAID && booking.getStatus() != BookingStatus.PENDING) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Booking cannot be cancelled");
         }
-        if (booking.getScreening().getStartsAt().isBefore(Instant.now())) {
+        if (booking.getStatus() == BookingStatus.PAID
+                && booking.getScreening().getStartsAt().isBefore(Instant.now())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Screening has already started");
         }
         booking.setStatus(BookingStatus.CANCELLED);
@@ -202,6 +264,35 @@ public class BookingService {
         }
         List<BookingHistoryResponse> items = page.stream().map(this::toHistory).collect(Collectors.toList());
         return new CursorPage<>(items, next, hasMore);
+    }
+
+    public BookingDetailResponse getUserBooking(Long userId, Long bookingId) {
+        Booking booking = bookingRepository.findByIdForUser(bookingId, userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found"));
+        if (booking.getStatus() != BookingStatus.PAID) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Ticket is available only for paid bookings");
+        }
+        Screening s = booking.getScreening();
+        var movie = s.getMovie();
+        List<BookingSeatLineResponse> seatLines = booking.getSeats().stream()
+                .map(bs -> new BookingSeatLineResponse(
+                        bs.getSeat().getRowNum(),
+                        bs.getSeat().getColNum(),
+                        bs.getSeat().getSeatType().name(),
+                        bs.getPrice()))
+                .collect(Collectors.toList());
+        return new BookingDetailResponse(
+                booking.getId(),
+                booking.getBookingCode(),
+                movie.getTitle(),
+                movie.getOriginalTitle(),
+                movie.getTitleRu(),
+                s.getStartsAt(),
+                s.getHall().getName(),
+                booking.getTotalPrice(),
+                booking.getStatus().name(),
+                seatLines
+        );
     }
 
     public CursorPage<AdminBookingRowResponse> listAdminBookings(Long movieId, LocalDate date, String cursor, int limit)
@@ -250,6 +341,7 @@ public class BookingService {
         var movie = s.getMovie();
         return new BookingHistoryResponse(
                 b.getId(),
+                b.getBookingCode(),
                 movie.getTitle(),
                 movie.getOriginalTitle(),
                 movie.getTitleRu(),
@@ -313,5 +405,15 @@ public class BookingService {
         return priceRuleRepository.findByCategoryAndFormat(category, screening.getFormat())
                 .map(rule -> rule.getAmount())
                 .orElse(screening.getBasePrice());
+    }
+
+    private String generateUniqueBookingCode() {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String code = BookingCodeGenerator.generate();
+            if (!bookingRepository.existsByBookingCode(code)) {
+                return code;
+            }
+        }
+        throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not generate booking code");
     }
 }

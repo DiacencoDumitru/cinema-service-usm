@@ -1,7 +1,9 @@
 package com.cineverse.auth;
 
+import com.cineverse.auth.dto.ForgotPasswordRequest;
 import com.cineverse.auth.dto.LoginRequest;
 import com.cineverse.auth.dto.RegisterRequest;
+import com.cineverse.auth.dto.ResetPasswordRequest;
 import com.cineverse.auth.dto.TokenResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -17,9 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, PasswordResetService passwordResetService) {
         this.authService = authService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/register")
@@ -38,5 +42,15 @@ public class AuthController {
         if (principal != null && authorization != null) {
             authService.logout(authorization);
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+    }
+
+    @PostMapping("/reset-password")
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
     }
 }

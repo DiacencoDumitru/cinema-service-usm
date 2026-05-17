@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
@@ -46,7 +47,12 @@ export function Bookings() {
           return (
             <div key={b.bookingId} className="rounded-lg border border-slate-800 bg-slate-900 p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <p className="font-semibold text-white">{displayTitle(b)}</p>
+                <div>
+                  <p className="font-semibold text-white">{displayTitle(b)}</p>
+                  {b.bookingCode && (
+                    <p className="font-mono text-xs text-slate-500">{b.bookingCode}</p>
+                  )}
+                </div>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     isPaid ? 'bg-emerald-900/50 text-emerald-200' : 'bg-slate-700 text-slate-300'
@@ -73,6 +79,14 @@ export function Bookings() {
                   </li>
                 ))}
               </ul>
+              {isPaid && (
+                <Link
+                  to={`/bilete/${b.bookingId}`}
+                  className="mt-3 inline-block rounded bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-600"
+                >
+                  {t('booking:viewTicket')}
+                </Link>
+              )}
               {isPaid && screeningFuture && (
                 <button
                   type="button"

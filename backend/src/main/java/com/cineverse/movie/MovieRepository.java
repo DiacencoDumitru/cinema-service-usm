@@ -20,6 +20,12 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
                       WHERE trim(rf) <> ''
                   )
               )
+              AND (
+                  CAST(:search AS TEXT) IS NULL OR CAST(:search AS TEXT) = ''
+                  OR lower(m.title) LIKE lower('%' || CAST(:search AS TEXT) || '%')
+                  OR lower(coalesce(m.original_title, '')) LIKE lower('%' || CAST(:search AS TEXT) || '%')
+                  OR lower(coalesce(m.title_ru, '')) LIKE lower('%' || CAST(:search AS TEXT) || '%')
+              )
               AND (:cursorId IS NULL OR m.id < :cursorId)
             ORDER BY m.id DESC
             LIMIT :limit
@@ -27,6 +33,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     List<Movie> findPageNative(
             @Param("status") String status,
             @Param("genreCsv") String genreCsv,
+            @Param("search") String search,
             @Param("cursorId") Long cursorId,
             @Param("limit") int limit
     );

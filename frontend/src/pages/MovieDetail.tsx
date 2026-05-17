@@ -8,6 +8,7 @@ import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import { useAppLocale } from '../hooks/useAppLocale';
 import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
 import { movieSubtitle } from '../utils/movieTitle';
+import { movieSynopsis } from '../utils/movieSynopsis';
 import { useLocaleStore } from '../stores/localeStore';
 
 const FALLBACK_POSTER =
@@ -86,7 +87,7 @@ export function MovieDetail() {
         <p>
           <span className="font-semibold text-slate-300">{t('movie:actors')}:</span> {m.actors.join(', ')}
         </p>
-        <p className="leading-relaxed text-slate-300">{m.synopsis}</p>
+        <p className="leading-relaxed text-slate-300">{movieSynopsis(m, locale) ?? m.synopsis}</p>
         {trailer && (
           <div className="aspect-video w-full max-w-2xl overflow-hidden rounded-lg border border-slate-800">
             <iframe title={t('movie:trailer')} className="h-full w-full" src={trailer} allowFullScreen />

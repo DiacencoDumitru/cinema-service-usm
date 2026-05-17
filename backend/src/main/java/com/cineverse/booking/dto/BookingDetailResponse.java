@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-public record BookingPaidResponse(
+public record BookingDetailResponse(
         Long bookingId,
         String bookingCode,
         String movieTitle,
@@ -12,10 +12,8 @@ public record BookingPaidResponse(
         String titleRu,
         Instant screeningStartsAt,
         String hallName,
-        BigDecimal subtotal,
-        int discountPercent,
-        BigDecimal discountAmount,
         BigDecimal totalPrice,
+        String status,
         List<BookingSeatLineResponse> seats
 ) {
 }

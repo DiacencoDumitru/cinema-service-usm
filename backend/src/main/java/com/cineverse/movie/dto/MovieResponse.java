@@ -18,6 +18,8 @@ public record MovieResponse(
         List<String> actors,
         String ageRating,
         String synopsis,
+        String synopsisRu,
+        String synopsisEn,
         String posterUrl,
         String trailerUrl,
         MovieStatus status,

@@ -9,5 +9,6 @@
   "carouselComingSoon": "COMING SOON",
   "noMovies": "No films.",
   "carouselPrev": "Previous",
-  "carouselNext": "Next"
+  "carouselNext": "Next",
+  "searchPlaceholder": "Search movies…"
 }

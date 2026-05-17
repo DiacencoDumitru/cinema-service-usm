@@ -6,7 +6,8 @@ import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { api } from '../api/client';
 import { FetchBanner, QueryErrorRetry } from '../components/FetchBanner';
-import type { PriceRow, Profile, ScreeningRow, SeatCell, TicketPriceCategory } from '../types';
+import type { PriceRow, Profile, ScreeningRow, SeatCell, SeatLockInfo, TicketPriceCategory } from '../types';
+import { LockCountdownBanner } from '../components/LockCountdownBanner';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import {
   BIRTHDAY_DISCOUNT_PERCENT,
@@ -30,6 +31,7 @@ export function SeatSelection() {
   const screeningId = Number(sid);
   const nav = useNavigate();
   const setScreening = useBookingDraftStore((s) => s.setScreening);
+  const setLockExpiresAt = useBookingDraftStore((s) => s.setLockExpiresAt);
   const toggleSeat = useBookingDraftStore((s) => s.toggleSeat);
   const setSeatPriceCategory = useBookingDraftStore((s) => s.setSeatPriceCategory);
   const selectedSeats = useBookingDraftStore((s) => s.selectedSeats);
@@ -136,7 +138,11 @@ export function SeatSelection() {
       return;
     }
     try {
-      await api.post('/api/bookings/lock', bookingSeatsPayload(screeningId, selectedSeats));
+      const { data } = await api.post<SeatLockInfo>(
+        '/api/bookings/lock',
+        bookingSeatsPayload(screeningId, selectedSeats),
+      );
+      setLockExpiresAt(data.expiresAt);
       nav(`/rezervare/${screeningId}/confirm`);
     } catch (e) {
       const err = e as AxiosError<{ message?: string }>;
@@ -299,6 +305,7 @@ export function SeatSelection() {
           </ul>
         </div>
       )}
+      <LockCountdownBanner />
       <button
         type="button"
         className="rounded bg-rose-600 px-6 py-2 font-medium text-white hover:bg-rose-500"

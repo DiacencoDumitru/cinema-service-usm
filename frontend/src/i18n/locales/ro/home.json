@@ -9,5 +9,6 @@
   "carouselComingSoon": "ÎN CURÂND",
   "noMovies": "Nu există filme.",
   "carouselPrev": "Înapoi",
-  "carouselNext": "Înainte"
+  "carouselNext": "Înainte",
+  "searchPlaceholder": "Caută film…"
 }

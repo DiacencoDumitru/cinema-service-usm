@@ -54,7 +54,11 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies", "/api/movies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sessions", "/api/sessions/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/prices").permitAll()
@@ -71,8 +75,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/admin/bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/admin/bookings/*/cancel").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/lock", "/api/bookings/*/cancel")
-                        .authenticated()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/bookings",
+                                "/api/bookings/lock",
+                                "/api/bookings/*/confirm-payment",
+                                "/api/bookings/*/cancel").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

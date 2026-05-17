@@ -13,6 +13,8 @@ export interface Movie {
   actors: string[];
   ageRating: string | null;
   synopsis: string | null;
+  synopsisRu: string | null;
+  synopsisEn: string | null;
   posterUrl: string | null;
   trailerUrl: string | null;
   status: MovieStatus;
@@ -71,8 +73,27 @@ export interface Profile {
   birthDate: string | null;
 }
 
+export interface SeatLockInfo {
+  expiresAt: string;
+  ttlSeconds: number;
+}
+
 export interface BookingHistory {
   bookingId: number;
+  bookingCode: string;
+  movieTitle: string;
+  originalTitle: string | null;
+  titleRu: string | null;
+  screeningStartsAt: string;
+  hallName: string;
+  totalPrice: string;
+  status: string;
+  seats: { row: number; col: number; seatType: string; price: string }[];
+}
+
+export interface BookingDetail {
+  bookingId: number;
+  bookingCode: string;
   movieTitle: string;
   originalTitle: string | null;
   titleRu: string | null;
@@ -85,6 +106,7 @@ export interface BookingHistory {
 
 export interface BookingPaid {
   bookingId: number;
+  bookingCode: string;
   movieTitle: string;
   originalTitle: string | null;
   titleRu: string | null;
