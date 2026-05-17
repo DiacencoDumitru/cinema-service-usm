@@ -140,9 +140,12 @@ public class BookingService {
 
         seatLockService.releaseLocks(request.screeningId(), seatIds);
 
+        var movie = screening.getMovie();
         return new BookingPaidResponse(
                 booking.getId(),
-                screening.getMovie().getTitle(),
+                movie.getTitle(),
+                movie.getOriginalTitle(),
+                movie.getTitleRu(),
                 screening.getStartsAt(),
                 screening.getHall().getName(),
                 subtotal,
@@ -202,10 +205,13 @@ public class BookingService {
 
     private AdminBookingRowResponse toAdminRow(Booking b) {
         Screening s = b.getScreening();
+        var movie = s.getMovie();
         return new AdminBookingRowResponse(
                 b.getId(),
                 b.getUser().getEmail(),
-                s.getMovie().getTitle(),
+                movie.getTitle(),
+                movie.getOriginalTitle(),
+                movie.getTitleRu(),
                 s.getStartsAt(),
                 s.getHall().getName(),
                 b.getTotalPrice(),
@@ -223,9 +229,12 @@ public class BookingService {
                         bs.getPrice()
                 ))
                 .collect(Collectors.toList());
+        var movie = s.getMovie();
         return new BookingHistoryResponse(
                 b.getId(),
-                s.getMovie().getTitle(),
+                movie.getTitle(),
+                movie.getOriginalTitle(),
+                movie.getTitleRu(),
                 s.getStartsAt(),
                 s.getHall().getName(),
                 b.getTotalPrice(),

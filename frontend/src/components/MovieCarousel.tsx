@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Movie } from '../types';
 import { MovieCard } from './MovieCard';
 
@@ -33,6 +34,7 @@ function useCarouselVisible(): number {
 type Props = { title: string; movies: Movie[] };
 
 export function MovieCarousel({ title, movies }: Props) {
+  const { t } = useTranslation('home');
   const visible = useCarouselVisible();
   const viewportRef = useRef<HTMLDivElement>(null);
   const mouseInsideRef = useRef(false);
@@ -90,7 +92,7 @@ export function MovieCarousel({ title, movies }: Props) {
     <section>
       <h2 className="mb-4 text-2xl font-semibold">{title}</h2>
       {movies.length === 0 ? (
-        <p className="text-slate-500">Nu există filme.</p>
+        <p className="text-slate-500">{t('noMovies')}</p>
       ) : (
         <div
           className="relative"
@@ -115,7 +117,7 @@ export function MovieCarousel({ title, movies }: Props) {
                 type="button"
                 className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-600 bg-slate-900/90 px-3 py-2 text-lg leading-none text-white shadow hover:bg-slate-800"
                 onClick={prev}
-                aria-label="Înapoi"
+                aria-label={t('carouselPrev')}
               >
                 ‹
               </button>
@@ -123,7 +125,7 @@ export function MovieCarousel({ title, movies }: Props) {
                 type="button"
                 className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-600 bg-slate-900/90 px-3 py-2 text-lg leading-none text-white shadow hover:bg-slate-800"
                 onClick={next}
-                aria-label="Înainte"
+                aria-label={t('carouselNext')}
               >
                 ›
               </button>

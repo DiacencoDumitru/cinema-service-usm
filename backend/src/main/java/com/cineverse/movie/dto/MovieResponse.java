@@ -9,6 +9,7 @@ public record MovieResponse(
         Long id,
         String title,
         String originalTitle,
+        String titleRu,
         int durationMin,
         List<String> formats,
         List<String> languages,

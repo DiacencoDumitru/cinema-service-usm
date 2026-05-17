@@ -259,6 +259,8 @@ public class ScreeningService {
                 s.getId(),
                 m.getId(),
                 m.getTitle(),
+                m.getOriginalTitle(),
+                m.getTitleRu(),
                 m.getGenres(),
                 m.getDurationMin(),
                 m.getAgeRating(),

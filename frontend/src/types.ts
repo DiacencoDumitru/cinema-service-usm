@@ -4,6 +4,7 @@ export interface Movie {
   id: number;
   title: string;
   originalTitle: string | null;
+  titleRu: string | null;
   durationMin: number;
   formats: string[];
   languages: string[];
@@ -28,6 +29,8 @@ export interface ScreeningRow {
   screeningId: number;
   movieId: number;
   title: string;
+  originalTitle: string | null;
+  titleRu: string | null;
   genres: string[];
   durationMin: number;
   ageRating: string | null;
@@ -71,6 +74,8 @@ export interface Profile {
 export interface BookingHistory {
   bookingId: number;
   movieTitle: string;
+  originalTitle: string | null;
+  titleRu: string | null;
   screeningStartsAt: string;
   hallName: string;
   totalPrice: string;
@@ -81,6 +86,8 @@ export interface BookingHistory {
 export interface BookingPaid {
   bookingId: number;
   movieTitle: string;
+  originalTitle: string | null;
+  titleRu: string | null;
   screeningStartsAt: string;
   hallName: string;
   subtotal: string;
@@ -108,6 +115,8 @@ export interface AdminBookingRow {
   bookingId: number;
   userEmail: string;
   movieTitle: string;
+  originalTitle: string | null;
+  titleRu: string | null;
   screeningStartsAt: string;
   hallName: string;
   totalPrice: string;

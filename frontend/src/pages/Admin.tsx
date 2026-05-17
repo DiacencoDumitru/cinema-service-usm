@@ -1,9 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
 import { AdminQueryList } from '../components/FetchBanner';
+import { useAppLocale } from '../hooks/useAppLocale';
+import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
 import type { AdminBookingRow, CursorPage, Hall, Movie, ScreeningRow } from '../types';
 
 const navCls = ({ isActive }: { isActive: boolean }) =>
@@ -20,21 +23,22 @@ function todayIsoDate(): string {
 }
 
 export function Admin() {
+  const { t } = useTranslation('admin');
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Panou admin</h1>
+      <h1 className="text-2xl font-bold">{t('panelTitle')}</h1>
       <nav className="flex flex-wrap gap-2 border-b border-slate-800 pb-4">
         <NavLink to="/admin/movies" className={navCls}>
-          Filme
+          {t('movies')}
         </NavLink>
         <NavLink to="/admin/halls" className={navCls}>
-          Săli
+          {t('halls')}
         </NavLink>
         <NavLink to="/admin/sessions" className={navCls}>
-          Seanse
+          {t('sessions')}
         </NavLink>
         <NavLink to="/admin/bookings" className={navCls}>
-          Rezervări
+          {t('bookings')}
         </NavLink>
       </nav>
       <Routes>
@@ -49,6 +53,8 @@ export function Admin() {
 }
 
 function MoviesAdmin() {
+  const { t } = useTranslation(['admin', 'common']);
+  const displayTitle = useMovieDisplayTitle();
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ['admin-movies'],
@@ -60,7 +66,7 @@ function MoviesAdmin() {
   const del = useMutation({
     mutationFn: (id: number) => api.delete(`/api/movies/${id}`),
     onSuccess: () => {
-      toast.success('Șters');
+      toast.success(t('admin:deleted'));
       qc.invalidateQueries({ queryKey: ['admin-movies'] });
     },
   });
@@ -68,6 +74,7 @@ function MoviesAdmin() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [title, setTitle] = useState('');
   const [originalTitle, setOriginalTitle] = useState('');
+  const [titleRu, setTitleRu] = useState('');
   const [duration, setDuration] = useState(100);
   const [formats, setFormats] = useState('2D');
   const [languages, setLanguages] = useState('EN,RO,RU');
@@ -84,6 +91,7 @@ function MoviesAdmin() {
     setEditingId(null);
     setTitle('');
     setOriginalTitle('');
+    setTitleRu('');
     setDuration(100);
     setFormats('2D');
     setLanguages('EN,RO,RU');
@@ -102,6 +110,7 @@ function MoviesAdmin() {
     setEditingId(id);
     setTitle(m.title);
     setOriginalTitle(m.originalTitle ?? m.title);
+    setTitleRu(m.titleRu ?? '');
     setDuration(m.durationMin);
     setFormats((m.formats ?? []).join(','));
     setLanguages((m.languages ?? []).join(','));
@@ -120,6 +129,7 @@ function MoviesAdmin() {
       const body = {
         title,
         originalTitle: originalTitle || title,
+        titleRu: titleRu || null,
         durationMin: duration,
         formats: formats.split(',').map((s) => s.trim()).filter(Boolean),
         languages: languages.split(',').map((s) => s.trim()).filter(Boolean),
@@ -140,29 +150,29 @@ function MoviesAdmin() {
       }
     },
     onSuccess: () => {
-      toast.success(editingId != null ? 'Film salvat' : 'Film adăugat');
+      toast.success(editingId != null ? t('admin:movieSaved') : t('admin:movieAdded'));
       qc.invalidateQueries({ queryKey: ['admin-movies'] });
       resetMovieForm();
     },
-    onError: () => toast.error('Eroare'),
+    onError: () => toast.error(t('common:error')),
   });
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <div>
-        <h2 className="mb-4 font-semibold">Listă</h2>
-        <AdminQueryList query={q} emptyMessage="Niciun film.">
+        <h2 className="mb-4 font-semibold">{t('admin:list')}</h2>
+        <AdminQueryList query={q} emptyMessage={t('admin:noMovies')}>
           {(data) => (
             <ul className="space-y-2 text-sm">
               {data.items.map((m) => (
                 <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
-                  <span>{m.title}</span>
+                  <span>{displayTitle(m)}</span>
                   <div className="flex gap-2">
                     <button type="button" className="text-rose-300 hover:underline" onClick={() => void beginEditMovie(m.id)}>
-                      Editează
+                      {t('common:edit')}
                     </button>
                     <button type="button" className="text-red-400 hover:underline" onClick={() => del.mutate(m.id)}>
-                      Șterge
+                      {t('common:delete')}
                     </button>
                   </div>
                 </li>
@@ -172,19 +182,22 @@ function MoviesAdmin() {
         </AdminQueryList>
       </div>
       <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-900 p-4">
-        <h2 className="font-semibold">{editingId != null ? `Editare film #${editingId}` : 'Film nou'}</h2>
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Titlu" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Titlu original" value={originalTitle} onChange={(e) => setOriginalTitle(e.target.value)} />
+        <h2 className="font-semibold">
+          {editingId != null ? t('admin:editMovie', { id: editingId }) : t('admin:newMovie')}
+        </h2>
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderTitle')} value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderOriginalTitle')} value={originalTitle} onChange={(e) => setOriginalTitle(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderTitleRu')} value={titleRu} onChange={(e) => setTitleRu(e.target.value)} />
         <input type="number" className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" value={duration} onChange={(e) => setDuration(Number(e.target.value))} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Formate (virgulă)" value={formats} onChange={(e) => setFormats(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Limbi (virgulă)" value={languages} onChange={(e) => setLanguages(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Genuri (virgulă)" value={genres} onChange={(e) => setGenres(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Actori (virgulă)" value={actors} onChange={(e) => setActors(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Regizor" value={director} onChange={(e) => setDirector(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Rating vârstă" value={ageRating} onChange={(e) => setAgeRating(e.target.value)} />
-        <textarea className="min-h-[80px] w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Sinopsis" value={synopsis} onChange={(e) => setSynopsis(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Poster URL" value={posterUrl} onChange={(e) => setPosterUrl(e.target.value)} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Trailer URL (YouTube embed)" value={trailerUrl} onChange={(e) => setTrailerUrl(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderFormats')} value={formats} onChange={(e) => setFormats(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderLanguages')} value={languages} onChange={(e) => setLanguages(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderGenres')} value={genres} onChange={(e) => setGenres(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderActors')} value={actors} onChange={(e) => setActors(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderDirector')} value={director} onChange={(e) => setDirector(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderAgeRating')} value={ageRating} onChange={(e) => setAgeRating(e.target.value)} />
+        <textarea className="min-h-[80px] w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderSynopsis')} value={synopsis} onChange={(e) => setSynopsis(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderPoster')} value={posterUrl} onChange={(e) => setPosterUrl(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:placeholderTrailer')} value={trailerUrl} onChange={(e) => setTrailerUrl(e.target.value)} />
         <select className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" value={status} onChange={(e) => setStatus(e.target.value as 'NOW_SHOWING' | 'COMING_SOON')}>
           <option value="NOW_SHOWING">NOW_SHOWING</option>
           <option value="COMING_SOON">COMING_SOON</option>
@@ -196,11 +209,11 @@ function MoviesAdmin() {
             disabled={!title || saveMovie.isPending}
             onClick={() => saveMovie.mutate()}
           >
-            {editingId != null ? 'Salvează' : 'Adaugă'}
+            {editingId != null ? t('common:save') : t('common:add')}
           </button>
           {editingId != null && (
             <button type="button" className="rounded border border-slate-600 px-4 py-2 text-slate-300" onClick={() => resetMovieForm()}>
-              Anulare
+              {t('admin:cancel')}
             </button>
           )}
         </div>
@@ -210,6 +223,7 @@ function MoviesAdmin() {
 }
 
 function HallsAdmin() {
+  const { t } = useTranslation(['admin', 'common']);
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ['admin-halls'],
@@ -219,14 +233,14 @@ function HallsAdmin() {
     },
   });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [name, setName] = useState('Sală nouă');
+  const [name, setName] = useState(() => t('admin:newHall'));
   const [rows, setRows] = useState(6);
   const [cols, setCols] = useState(10);
   const [vipRows, setVipRows] = useState('6');
 
   function resetHallForm() {
     setEditingId(null);
-    setName('Sală nouă');
+    setName(t('admin:newHall'));
     setRows(6);
     setCols(10);
     setVipRows('6');
@@ -255,58 +269,62 @@ function HallsAdmin() {
       }
     },
     onSuccess: () => {
-      toast.success(editingId != null ? 'Sală salvată' : 'Sală creată');
+      toast.success(editingId != null ? t('admin:hallSaved') : t('admin:hallCreated'));
       qc.invalidateQueries({ queryKey: ['admin-halls'] });
       resetHallForm();
     },
-    onError: () => toast.error('Eroare'),
+    onError: () => toast.error(t('common:error')),
   });
 
   const delHall = useMutation({
     mutationFn: (id: number) => api.delete(`/api/halls/${id}`),
     onSuccess: () => {
-      toast.success('Sală ștearsă');
+      toast.success(t('admin:hallDeleted'));
       qc.invalidateQueries({ queryKey: ['admin-halls'] });
       resetHallForm();
     },
-    onError: () => toast.error('Eroare'),
+    onError: () => toast.error(t('common:error')),
   });
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      {q.isPending && <p className="text-sm text-slate-400">Se încarcă sălile…</p>}
-      {q.isError && <p className="text-sm text-red-400">Eroare la încărcarea sălilor.</p>}
+      {q.isPending && <p className="text-sm text-slate-400">{t('admin:loadingHalls')}</p>}
+      {q.isError && <p className="text-sm text-red-400">{t('admin:loadHallsFailed')}</p>}
       <ul className="space-y-2 text-sm">
         {(q.data?.items ?? []).map((h) => (
           <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
             <span>
               {h.name} — {h.rowsCount}x{h.seatsPerRow}
-              {(h.vipRows?.length ?? 0) > 0 ? ` · VIP rânduri: ${(h.vipRows ?? []).join(',')}` : ''}
+              {(h.vipRows?.length ?? 0) > 0
+                ? ` · ${t('admin:hallVipLabel')} ${(h.vipRows ?? []).join(',')}`
+                : ''}
             </span>
             <div className="flex gap-2">
               <button type="button" className="text-rose-300 hover:underline" onClick={() => beginEditHall(h)}>
-                Editează
+                {t('common:edit')}
               </button>
               <button type="button" className="text-red-400 hover:underline" onClick={() => delHall.mutate(h.id)}>
-                Șterge
+                {t('common:delete')}
               </button>
             </div>
           </li>
         ))}
       </ul>
       <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-900 p-4">
-        <h2 className="font-semibold">{editingId != null ? `Editare sală #${editingId}` : 'Sală nouă'}</h2>
+        <h2 className="font-semibold">
+          {editingId != null ? t('admin:editHall', { id: editingId }) : t('admin:newHall')}
+        </h2>
         <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} />
         <input type="number" className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" value={rows} onChange={(e) => setRows(Number(e.target.value))} />
         <input type="number" className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" value={cols} onChange={(e) => setCols(Number(e.target.value))} />
-        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Rânduri VIP (virgulă)" value={vipRows} onChange={(e) => setVipRows(e.target.value)} />
+        <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t('admin:hallVipRows')} value={vipRows} onChange={(e) => setVipRows(e.target.value)} />
         <div className="flex flex-wrap gap-2">
           <button type="button" className="rounded bg-rose-600 px-4 py-2 text-white" onClick={() => saveHall.mutate()}>
-            {editingId != null ? 'Salvează' : 'Creează'}
+            {editingId != null ? t('common:save') : t('admin:create')}
           </button>
           {editingId != null && (
             <button type="button" className="rounded border border-slate-600 px-4 py-2 text-slate-300" onClick={() => resetHallForm()}>
-              Anulare
+              {t('admin:cancel')}
             </button>
           )}
         </div>
@@ -316,6 +334,9 @@ function HallsAdmin() {
 }
 
 function SessionsAdmin() {
+  const { t } = useTranslation(['admin', 'common']);
+  const { formatDateTime } = useAppLocale();
+  const displayTitle = useMovieDisplayTitle();
   const qc = useQueryClient();
   const movies = useQuery({
     queryKey: ['admin-movies-pick'],
@@ -397,48 +418,49 @@ function SessionsAdmin() {
       }
     },
     onSuccess: () => {
-      toast.success(editingScreeningId != null ? 'Seans salvat' : 'Seans creat');
+      toast.success(editingScreeningId != null ? t('admin:sessionSaved') : t('admin:sessionCreated'));
       qc.invalidateQueries({ queryKey: ['admin-sessions-list'] });
       resetSessionForm();
     },
-    onError: () => toast.error('Conflict sau date invalide'),
+    onError: () => toast.error(t('admin:sessionConflict')),
   });
 
   const delSession = useMutation({
     mutationFn: (id: number) => api.delete(`/api/sessions/${id}`),
     onSuccess: () => {
-      toast.success('Seans șters');
+      toast.success(t('admin:sessionDeleted'));
       qc.invalidateQueries({ queryKey: ['admin-sessions-list'] });
       resetSessionForm();
     },
-    onError: () => toast.error('Nu se poate șterge (există rezervări?)'),
+    onError: () => toast.error(t('admin:sessionDeleteFailed')),
   });
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-3">
-        <h2 className="font-semibold">Seanse — data</h2>
+        <h2 className="font-semibold">{t('admin:sessionsByDate')}</h2>
         <input
           type="date"
           className="w-full max-w-xs rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
           value={listDate}
           onChange={(e) => setListDate(e.target.value)}
         />
-        <AdminQueryList query={sessionsList} emptyMessage="Niciun seans în această zi.">
+        <AdminQueryList query={sessionsList} emptyMessage={t('admin:noSessionsDay')}>
           {(items) => (
         <ul className="max-h-[480px] space-y-2 overflow-y-auto text-sm">
           {items.map((s) => (
             <li key={s.screeningId} className="rounded border border-slate-800 bg-slate-900 px-3 py-2">
-              <p className="font-medium">{s.title}</p>
+              <p className="font-medium">{displayTitle(s)}</p>
               <p className="text-slate-400">
-                {new Date(s.startsAt).toLocaleString('ro-RO')} · {s.hallName} · {s.format} · {s.language} · {s.basePrice != null ? Number(s.basePrice).toFixed(2) : '—'} MDL
+                {formatDateTime(s.startsAt)} · {s.hallName} · {s.format} · {s.language} ·{' '}
+                {s.basePrice != null ? Number(s.basePrice).toFixed(2) : '—'} {t('common:mdl')}
               </p>
               <div className="mt-2 flex gap-2">
                 <button type="button" className="text-rose-300 hover:underline" onClick={() => beginEditSession(s)}>
-                  Editează
+                  {t('common:edit')}
                 </button>
                 <button type="button" className="text-red-400 hover:underline" onClick={() => delSession.mutate(s.screeningId)}>
-                  Șterge
+                  {t('common:delete')}
                 </button>
               </div>
             </li>
@@ -448,11 +470,13 @@ function SessionsAdmin() {
         </AdminQueryList>
       </div>
       <div className="max-w-md space-y-3 rounded-lg border border-slate-800 bg-slate-900 p-4">
-        <h2 className="font-semibold">{editingScreeningId != null ? `Editare seans #${editingScreeningId}` : 'Seans nou'}</h2>
+        <h2 className="font-semibold">
+          {editingScreeningId != null ? t('admin:editSession', { id: editingScreeningId }) : t('admin:newSession')}
+        </h2>
         <select className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" value={movieId} onChange={(e) => setMovieId(Number(e.target.value))}>
           {(movies.data ?? []).map((m) => (
             <option key={m.id} value={m.id}>
-              {m.title}
+              {displayTitle(m)}
             </option>
           ))}
         </select>
@@ -480,11 +504,11 @@ function SessionsAdmin() {
             className="rounded bg-rose-600 px-4 py-2 text-white"
             onClick={() => startsLocal && saveSession.mutate()}
           >
-            {editingScreeningId != null ? 'Salvează seans' : 'Creează seans'}
+            {editingScreeningId != null ? t('admin:saveSession') : t('admin:createSession')}
           </button>
           {editingScreeningId != null && (
             <button type="button" className="rounded border border-slate-600 px-4 py-2 text-slate-300" onClick={() => resetSessionForm()}>
-              Anulare
+              {t('admin:cancel')}
             </button>
           )}
         </div>
@@ -494,6 +518,9 @@ function SessionsAdmin() {
 }
 
 function BookingsAdmin() {
+  const { t } = useTranslation(['admin', 'common']);
+  const { formatDateTime } = useAppLocale();
+  const displayTitle = useMovieDisplayTitle();
   const moviesPick = useQuery({
     queryKey: ['admin-bookings-movies'],
     queryFn: async () => {
@@ -526,10 +553,10 @@ function BookingsAdmin() {
           value={movieFilter === '' ? '' : String(movieFilter)}
           onChange={(e) => setMovieFilter(e.target.value === '' ? '' : Number(e.target.value))}
         >
-          <option value="">Toate filmele</option>
+          <option value="">{t('admin:allMovies')}</option>
           {(moviesPick.data ?? []).map((m) => (
             <option key={m.id} value={m.id}>
-              {m.title}
+              {displayTitle(m)}
             </option>
           ))}
         </select>
@@ -540,14 +567,14 @@ function BookingsAdmin() {
           onChange={(e) => setDateFilter(e.target.value)}
         />
       </div>
-      {q.isPending && <p className="text-sm text-slate-400">Se încarcă rezervările…</p>}
-      {q.isError && <p className="text-sm text-red-400">Eroare la încărcarea rezervărilor.</p>}
+      {q.isPending && <p className="text-sm text-slate-400">{t('admin:loadingBookings')}</p>}
+      {q.isError && <p className="text-sm text-red-400">{t('admin:loadBookingsFailed')}</p>}
       <ul className="space-y-2 text-sm">
         {(q.data ?? []).map((b) => (
           <li key={b.bookingId} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2">
             <span>
-              #{b.bookingId} {b.userEmail} — {b.movieTitle} —{' '}
-              {new Date(b.screeningStartsAt).toLocaleString('ro-RO')} — {b.totalPrice} MDL · {b.status}
+              #{b.bookingId} {b.userEmail} — {displayTitle(b)} —{' '}
+              {formatDateTime(b.screeningStartsAt)} — {b.totalPrice} {t('common:mdl')} · {b.status}
             </span>
             {b.status === 'PAID' && new Date(b.screeningStartsAt).getTime() > Date.now() && (
               <button
@@ -557,13 +584,13 @@ function BookingsAdmin() {
                   void api
                     .post(`/api/admin/bookings/${b.bookingId}/cancel`)
                     .then(() => {
-                      toast.success('Rezervare anulată');
+                      toast.success(t('admin:bookingCancelled'));
                       void q.refetch();
                     })
-                    .catch(() => toast.error('Eroare'))
+                    .catch(() => toast.error(t('common:error')))
                 }
               >
-                Anulează
+                {t('admin:cancelBooking')}
               </button>
             )}
           </li>

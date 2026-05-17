@@ -8,6 +8,8 @@ public record ScreeningScheduleRowResponse(
         Long screeningId,
         Long movieId,
         String title,
+        String originalTitle,
+        String titleRu,
         List<String> genres,
         int durationMin,
         String ageRating,

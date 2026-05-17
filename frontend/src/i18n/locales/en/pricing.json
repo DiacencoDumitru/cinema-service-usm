@@ -1,0 +1,10 @@
+{
+  "title": "Prices",
+  "birthdayBanner": "On your birthday you get {{percent}}% off all tickets for ±{{days}} days. Add your birth date in your profile to activate it.",
+  "loading": "Loading prices…",
+  "loadFailed": "Could not load prices.",
+  "category": "Category",
+  "format": "Format",
+  "priceMdl": "Price (MDL)",
+  "empty": "No prices available."
+}

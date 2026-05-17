@@ -7,6 +7,8 @@ public record AdminBookingRowResponse(
         Long bookingId,
         String userEmail,
         String movieTitle,
+        String originalTitle,
+        String titleRu,
         Instant screeningStartsAt,
         String hallName,
         BigDecimal totalPrice,

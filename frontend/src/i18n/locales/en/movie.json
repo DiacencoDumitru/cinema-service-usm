@@ -1,0 +1,9 @@
+{
+  "notFound": "Film not found.",
+  "director": "Director",
+  "actors": "Cast",
+  "trailer": "trailer",
+  "screenings": "Screenings",
+  "buyTicket": "Buy ticket",
+  "loginForTickets": "Sign in to buy tickets"
+}

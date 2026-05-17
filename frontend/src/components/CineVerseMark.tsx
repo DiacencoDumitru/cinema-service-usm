@@ -1,7 +1,6 @@
 import { useId } from 'react';
 
 type CineVerseMarkProps = {
-  /** Pixel width and height (square). */
   size?: number;
   className?: string;
 };

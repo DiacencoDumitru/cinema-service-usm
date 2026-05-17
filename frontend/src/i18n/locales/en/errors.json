@@ -1,0 +1,13 @@
+{
+  "generic": "An error occurred",
+  "unauthorized": "Unauthorized",
+  "forbidden": "Forbidden",
+  "seatsUnavailable": "One or more seats are not available",
+  "seatAlreadyBooked": "Seat already booked",
+  "selectAtLeastOneSeat": "Select at least one seat",
+  "invalidTicketCategory": "Invalid ticket category",
+  "bookingCannotCancel": "Booking cannot be cancelled",
+  "screeningAlreadyStarted": "Screening has already started",
+  "notYourBooking": "Not your booking",
+  "bookingNotFound": "Booking not found"
+}

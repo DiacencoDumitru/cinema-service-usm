@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { api } from '../api/client';
@@ -15,10 +16,16 @@ import {
 import { categoryLabel } from '../utils/labels';
 import { bookingSeatsPayload, resolveSeatPrice } from '../utils/seatPrice';
 import { useAuthStore } from '../stores/authStore';
+import { useAppLocale } from '../hooks/useAppLocale';
+import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
+import { translateApiError } from '../utils/translateApiError';
 
 const TICKET_CATEGORIES: TicketPriceCategory[] = ['STANDARD', 'CHILD', 'STUDENT'];
 
 export function SeatSelection() {
+  const { t } = useTranslation(['booking', 'common']);
+  const { formatDateTime } = useAppLocale();
+  const displayTitle = useMovieDisplayTitle();
   const { screeningId: sid } = useParams();
   const screeningId = Number(sid);
   const nav = useNavigate();
@@ -73,7 +80,18 @@ export function SeatSelection() {
       meta.data.basePrice === undefined || meta.data.basePrice === null
         ? 0
         : Number(meta.data.basePrice);
-    setScreening(screeningId, meta.data.title, meta.data.startsAt, meta.data.hallName, meta.data.format, bp);
+    setScreening(
+      screeningId,
+      {
+        title: meta.data.title,
+        originalTitle: meta.data.originalTitle,
+        titleRu: meta.data.titleRu,
+      },
+      meta.data.startsAt,
+      meta.data.hallName,
+      meta.data.format,
+      bp,
+    );
   }, [meta.data, screeningId, setScreening]);
 
   const byRow = useMemo(() => {
@@ -114,7 +132,7 @@ export function SeatSelection() {
 
   async function handleContinue() {
     if (selectedSeats.length === 0) {
-      toast.error('Alege cel puțin un loc');
+      toast.error(t('booking:selectAtLeastOneSeat'));
       return;
     }
     try {
@@ -124,23 +142,23 @@ export function SeatSelection() {
       const err = e as AxiosError<{ message?: string }>;
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
-      if (status === 409) toast.error(msg ?? 'Locurile au fost rezervate deja');
-      else if (status === 400) toast.error(msg ?? 'Selecție invalidă');
-      else if (status !== 401 && status !== 403) toast.error('Eroare. Încearcă din nou');
+      if (status === 409) toast.error(msg ? translateApiError(t, msg) : t('booking:seatsTaken'));
+      else if (status === 400) toast.error(msg ? translateApiError(t, msg) : t('booking:invalidSelection'));
+      else if (status !== 401 && status !== 403) toast.error(t('booking:tryAgain'));
       await seats.refetch();
     }
   }
 
-  if (!Number.isFinite(screeningId)) return <p>Seans invalid.</p>;
+  if (!Number.isFinite(screeningId)) return <p>{t('booking:invalidScreening')}</p>;
 
   if (meta.isPending || prices.isPending || seats.isPending) {
-    return <FetchBanner tone="load">Se încarcă sala și prețurile…</FetchBanner>;
+    return <FetchBanner tone="load">{t('booking:loadingHall')}</FetchBanner>;
   }
 
   if (meta.isError || prices.isError || seats.isError || !meta.data) {
     return (
       <QueryErrorRetry
-        message="Nu s-au putut încărca datele seansului."
+        message={t('booking:loadSessionFailed')}
         onRetry={() => {
           void meta.refetch();
           void prices.refetch();
@@ -153,15 +171,15 @@ export function SeatSelection() {
   return (
     <div className="space-y-6">
       <Link className="text-sm text-rose-400 hover:underline" to={`/film/${meta.data.movieId}`}>
-        ← Înapoi la film
+        {t('booking:backToMovie')}
       </Link>
-      <h1 className="text-2xl font-bold">Alege locuri</h1>
+      <h1 className="text-2xl font-bold">{t('booking:chooseSeats')}</h1>
       <p className="text-slate-400">
-        {meta.data.title} · {new Date(meta.data.startsAt).toLocaleString('ro-RO')} · {meta.data.hallName}
+        {displayTitle(meta.data)} · {formatDateTime(meta.data.startsAt)} · {meta.data.hallName}
       </p>
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <label className="text-slate-400" htmlFor="default-ticket-category">
-          Tip bilet implicit:
+          {t('booking:defaultTicketType')}
         </label>
         <select
           id="default-ticket-category"
@@ -171,34 +189,35 @@ export function SeatSelection() {
         >
           {TICKET_CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {categoryLabel(c)}
+              {categoryLabel(t, c)}
             </option>
           ))}
         </select>
       </div>
-      <p className="text-xs text-slate-500">
-        Verde / aur = liber (standard / VIP) · Gri = ocupat · Galben = blocat alt utilizator · Contur = selectat de tine
-      </p>
+      <p className="text-xs text-slate-500">{t('booking:seatLegend')}</p>
       {birthdayActive && (
         <div className="inline-block rounded-full border border-emerald-600 bg-emerald-900/40 px-3 py-1 text-xs font-semibold text-emerald-100">
-          Reducere {BIRTHDAY_DISCOUNT_PERCENT}% activă — zi de naștere
+          {t('booking:birthdayBadge', { percent: BIRTHDAY_DISCOUNT_PERCENT })}
         </div>
       )}
       {standardPrice != null && childPrice != null && studentPrice != null && vipPrice != null && (
         <p className="text-sm text-slate-300">
-          Adult standard:{' '}
-          <span className="font-semibold text-emerald-400">{priceForDisplay(standardPrice).toFixed(2)} MDL</span>
+          {t('booking:priceAdult')}{' '}
+          <span className="font-semibold text-emerald-400">{priceForDisplay(standardPrice).toFixed(2)} {t('common:mdl')}</span>
           {' · '}
-          Copil: <span className="font-semibold">{priceForDisplay(childPrice).toFixed(2)} MDL</span>
+          {t('booking:priceChild')}{' '}
+          <span className="font-semibold">{priceForDisplay(childPrice).toFixed(2)} {t('common:mdl')}</span>
           {' · '}
-          Student: <span className="font-semibold">{priceForDisplay(studentPrice).toFixed(2)} MDL</span>
+          {t('booking:priceStudent')}{' '}
+          <span className="font-semibold">{priceForDisplay(studentPrice).toFixed(2)} {t('common:mdl')}</span>
           {' · '}
-          VIP: <span className="font-semibold text-amber-400">{priceForDisplay(vipPrice).toFixed(2)} MDL</span> (
+          {t('booking:priceVip')}{' '}
+          <span className="font-semibold text-amber-400">{priceForDisplay(vipPrice).toFixed(2)} {t('common:mdl')}</span> (
           {meta.data.format})
         </p>
       )}
       <div className="inline-block rounded-xl border border-slate-800 bg-slate-900 p-4">
-        <p className="mb-4 text-center text-sm text-slate-500">Ecran</p>
+        <p className="mb-4 text-center text-sm text-slate-500">{t('booking:screen')}</p>
         <div className="space-y-2">
           {byRow.map(([row, cells]) => (
             <div key={row} className="flex items-center gap-2">
@@ -225,7 +244,7 @@ export function SeatSelection() {
                       key={c.seatId}
                       type="button"
                       disabled={blocked}
-                      title={`${c.seatType} · ${unitPrice.toFixed(2)} MDL`}
+                      title={`${c.seatType} · ${unitPrice.toFixed(2)} ${t('common:mdl')}`}
                       className={cls}
                       onClick={() => {
                         if (!blocked) {
@@ -253,26 +272,28 @@ export function SeatSelection() {
       </div>
       {selectedSeats.length > 0 && (
         <div className="rounded-lg border border-slate-800 bg-slate-900 p-4 text-sm">
-          <p className="mb-2 font-medium text-slate-300">Locuri selectate</p>
+          <p className="mb-2 font-medium text-slate-300">{t('booking:selectedSeats')}</p>
           <ul className="space-y-2">
             {selectedSeats.map((s) => (
               <li key={s.seatId} className="flex flex-wrap items-center gap-2 text-slate-300">
                 <span>
-                  Rând {s.row}, loc {s.col} ({s.seatType})
+                  {t('common:row')} {s.row}, {t('common:seat')} {s.col} ({s.seatType})
                 </span>
                 <select
                   value={s.priceCategory}
                   onChange={(e) => updateSeatCategory(s.seatId, e.target.value as TicketPriceCategory)}
                   className="rounded border border-slate-700 bg-slate-800 px-2 py-0.5 text-white"
-                  aria-label={`Tip bilet rând ${s.row} loc ${s.col}`}
+                  aria-label={t('booking:seatTicketAria', { row: s.row, col: s.col })}
                 >
                   {TICKET_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
-                      {categoryLabel(c)}
+                      {categoryLabel(t, c)}
                     </option>
                   ))}
                 </select>
-                <span className="text-emerald-400">{s.price.toFixed(2)} MDL</span>
+                <span className="text-emerald-400">
+                  {s.price.toFixed(2)} {t('common:mdl')}
+                </span>
               </li>
             ))}
           </ul>
@@ -283,9 +304,8 @@ export function SeatSelection() {
         className="rounded bg-rose-600 px-6 py-2 font-medium text-white hover:bg-rose-500"
         onClick={() => void handleContinue()}
       >
-        Continuă la confirmare
+        {t('booking:continueToConfirm')}
       </button>
     </div>
   );
 }
-

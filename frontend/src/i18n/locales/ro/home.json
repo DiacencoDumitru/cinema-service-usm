@@ -1,0 +1,13 @@
+{
+  "nowShowingLoad": "Se încarcă filmele din derulare…",
+  "nowShowingError": "Nu s-au putut încărca filmele din derulare. Verifică că backend-ul răspunde la /api/movies, că domeniul aplicației este inclus în CORS (CORS_ORIGIN_* pe server) și, dacă API-ul e pe alt host, setează VITE_API_URL la buildul frontend-ului.",
+  "nowShowing502": "Răspuns 502 (Bad Gateway): de obicei nginx nu poate contacta backend-ul (încă pornește sau a căzut). Cu Docker Compose: reconstruiește imaginile, apoi `docker compose up` — frontend-ul așteaptă acum backend-ul sănătos înainte de a fi marcat „ready”.",
+  "comingSoonLoad": "Se încarcă filmele din curând…",
+  "comingSoonError": "Nu s-au putut încărca filmele din curând. Aceleași verificări ca pentru secțiunea din derulare.",
+  "comingSoon502": "Răspuns 502: vezi mesajul de mai sus pentru derulare (același gateway/backend).",
+  "carouselNowShowing": "ÎN DERULARE",
+  "carouselComingSoon": "ÎN CURÂND",
+  "noMovies": "Nu există filme.",
+  "carouselPrev": "Înapoi",
+  "carouselNext": "Înainte"
+}

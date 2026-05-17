@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
+import { useLocaleStore } from '../stores/localeStore';
 import type { Movie } from '../types';
+import { movieSubtitle } from '../utils/movieTitle';
 import { youtubeVideoIdFromUrl } from '../utils/youtube';
 
 const TRAILER_MAX_PLAY_MS = 60_000;
@@ -46,6 +49,8 @@ function loadYoutubeIframeApi(): Promise<void> {
 }
 
 export function VideoStage({ movies }: Props) {
+  const displayTitle = useMovieDisplayTitle();
+  const locale = useLocaleStore((s) => s.locale);
   const withTrailers = useMemo(
     () => movies.filter((m) => youtubeVideoIdFromUrl(m.trailerUrl) != null),
     [movies],
@@ -213,16 +218,16 @@ export function VideoStage({ movies }: Props) {
           <div
             ref={containerRef}
             className="absolute inset-0 h-full w-full [&_iframe]:absolute [&_iframe]:inset-0 [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:border-0"
-            title={`Trailer: ${current.title}`}
+            title={`Trailer: ${displayTitle(current)}`}
           />
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pb-4 pt-16"
             aria-hidden
           >
-            <p className="text-lg font-bold tracking-wide text-white drop-shadow-md sm:text-xl">{current.title}</p>
-            {current.originalTitle && current.originalTitle !== current.title && (
-              <p className="mt-1 text-sm text-slate-300">{current.originalTitle}</p>
-            )}
+            <p className="text-lg font-bold tracking-wide text-white drop-shadow-md sm:text-xl">{displayTitle(current)}</p>
+            {movieSubtitle(current, locale) ? (
+              <p className="mt-1 text-sm text-slate-300">{movieSubtitle(current, locale)}</p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -237,7 +242,7 @@ export function VideoStage({ movies }: Props) {
               aria-selected={i === index}
               className={`h-2.5 w-2.5 rounded-full transition ${i === index ? 'bg-purple-500' : 'bg-slate-600 hover:bg-slate-500'}`}
               onClick={() => goTo(i)}
-              aria-label={`Trailer ${m.title}`}
+              aria-label={`Trailer ${displayTitle(m)}`}
             />
           ))}
         </div>

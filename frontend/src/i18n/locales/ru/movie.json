@@ -1,0 +1,9 @@
+{
+  "notFound": "Фильм не найден.",
+  "director": "Режиссёр",
+  "actors": "Актёры",
+  "trailer": "трейлер",
+  "screenings": "Сеансы",
+  "buyTicket": "Купить билет",
+  "loginForTickets": "Войдите, чтобы купить билеты"
+}
