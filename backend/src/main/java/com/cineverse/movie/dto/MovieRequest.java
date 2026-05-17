@@ -21,6 +21,8 @@ public record MovieRequest(
         @NotNull List<@NotBlank @Size(max = 255) String> actors,
         @Size(max = 32) String ageRating,
         String synopsis,
+        String synopsisRu,
+        String synopsisEn,
         @Size(max = 2048) String posterUrl,
         @Size(max = 2048) String trailerUrl,
         @NotNull MovieStatus status,
