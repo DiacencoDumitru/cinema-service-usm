@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
@@ -18,6 +19,12 @@ export function BookingConfirm() {
   const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
   const discountAmount = subtotal - total;
 
+  useEffect(() => {
+    if (!Number.isFinite(screeningId) || selectedSeats.length === 0) {
+      nav(`/rezervare/${screeningId}`, { replace: true });
+    }
+  }, [nav, screeningId, selectedSeats.length]);
+
   const pay = useMutation({
     mutationFn: async () => {
       const { data } = await api.post<BookingPaid>(
@@ -33,6 +40,10 @@ export function BookingConfirm() {
     },
     onError: () => toast.error('Plată eșuată'),
   });
+
+  if (selectedSeats.length === 0) {
+    return <p className="text-slate-400">Redirecționare…</p>;
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-6">

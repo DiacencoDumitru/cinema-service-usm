@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { api } from '../api/client';
+import { FetchBanner, QueryErrorRetry } from '../components/FetchBanner';
 import type { PriceRow, Profile, ScreeningRow, SeatCell, TicketPriceCategory } from '../types';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import {
@@ -133,11 +134,20 @@ export function SeatSelection() {
   if (!Number.isFinite(screeningId)) return <p>Seans invalid.</p>;
 
   if (meta.isPending || prices.isPending || seats.isPending) {
-    return <p className="text-slate-400">Se încarcă sala și prețurile…</p>;
+    return <FetchBanner tone="load">Se încarcă sala și prețurile…</FetchBanner>;
   }
 
   if (meta.isError || prices.isError || seats.isError || !meta.data) {
-    return <p className="text-red-400">Nu s-au putut încărca datele seansului.</p>;
+    return (
+      <QueryErrorRetry
+        message="Nu s-au putut încărca datele seansului."
+        onRetry={() => {
+          void meta.refetch();
+          void prices.refetch();
+          void seats.refetch();
+        }}
+      />
+    );
   }
 
   return (
