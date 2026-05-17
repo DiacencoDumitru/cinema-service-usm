@@ -54,5 +54,10 @@
   "paySimulated": "Оплатить (симуляция)",
   "paySuccess": "Оплата симулирована — билет выдан!",
   "payFailed": "Оплата не удалась",
-  "redirecting": "Перенаправление…"
+  "redirecting": "Перенаправление…",
+  "ticketTitle": "Электронный билет",
+  "ticketLoadFailed": "Не удалось загрузить билет.",
+  "backToTickets": "← Мои билеты",
+  "bookingCode": "Код брони",
+  "viewTicket": "Открыть билет (QR)"
 }

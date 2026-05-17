@@ -3,6 +3,7 @@ package com.cineverse.integration;
 import com.cineverse.auth.dto.LoginRequest;
 import com.cineverse.auth.dto.RegisterRequest;
 import com.cineverse.auth.dto.TokenResponse;
+import com.cineverse.booking.dto.BookingDetailResponse;
 import com.cineverse.booking.dto.BookingPaidResponse;
 import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
@@ -165,7 +166,17 @@ class CineverseIntegrationTest {
         assertThat(payRes.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(payRes.getBody()).isNotNull();
         assertThat(payRes.getBody().bookingId()).isNotNull();
+        assertThat(payRes.getBody().bookingCode()).startsWith("AC");
         assertThat(payRes.getBody().totalPrice()).isGreaterThan(BigDecimal.ZERO);
+
+        ResponseEntity<BookingDetailResponse> detail = restTemplate.exchange(
+                baseUrl() + "/api/user/bookings/" + payRes.getBody().bookingId(),
+                HttpMethod.GET,
+                new HttpEntity<>(bearer(token)),
+                BookingDetailResponse.class);
+        assertThat(detail.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(detail.getBody()).isNotNull();
+        assertThat(detail.getBody().bookingCode()).isEqualTo(payRes.getBody().bookingCode());
     }
 
     @Test
