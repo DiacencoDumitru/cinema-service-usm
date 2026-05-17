@@ -34,11 +34,14 @@ export function BookingConfirm() {
 
   const pay = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post<BookingPaid>(
+      const { data: pending } = await api.post<BookingPaid>(
         '/api/bookings',
         bookingSeatsPayload(screeningId, selectedSeats),
       );
-      return data;
+      const { data: paid } = await api.post<BookingPaid>(
+        `/api/bookings/${pending.bookingId}/confirm-payment`,
+      );
+      return paid;
     },
     onSuccess: (data) => {
       toast.success(t('booking:paySuccess'));
