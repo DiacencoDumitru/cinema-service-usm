@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
+import { AuroraPageHeader } from '../components/AuroraPageHeader';
 import { FetchBanner, QueryErrorRetry } from '../components/FetchBanner';
 import { useAppLocale } from '../hooks/useAppLocale';
 import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
@@ -30,22 +31,33 @@ export function Bookings() {
     onError: () => toast.error(t('booking:cancelFailed')),
   });
 
-  if (q.isLoading) return <FetchBanner tone="load">{t('common:loading')}</FetchBanner>;
+  if (q.isLoading) {
+    return (
+      <AuroraPageHeader title={t('booking:myTicketsTitle')} lead={t('booking:myTicketsLead')} maxWidth="6xl">
+        <FetchBanner tone="load">{t('common:loading')}</FetchBanner>
+      </AuroraPageHeader>
+    );
+  }
+
   if (q.isError || !q.data) {
     return (
-      <QueryErrorRetry message={t('booking:loadBookingsFailed')} onRetry={() => void q.refetch()} />
+      <AuroraPageHeader title={t('booking:myTicketsTitle')} lead={t('booking:myTicketsLead')} maxWidth="6xl">
+        <QueryErrorRetry message={t('booking:loadBookingsFailed')} onRetry={() => void q.refetch()} />
+      </AuroraPageHeader>
     );
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">{t('booking:myTicketsTitle')}</h1>
-      <div className="space-y-4">
+    <AuroraPageHeader title={t('booking:myTicketsTitle')} lead={t('booking:myTicketsLead')} maxWidth="6xl">
+      <div className="relative space-y-4">
         {q.data.items.map((b) => {
           const isPaid = b.status === 'PAID';
           const screeningFuture = new Date(b.screeningStartsAt).getTime() > Date.now();
           return (
-            <div key={b.bookingId} className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+            <div
+              key={b.bookingId}
+              className="rounded-xl border border-slate-800/80 bg-slate-900/50 p-4 transition-colors hover:border-emerald-500/20"
+            >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-white">{displayTitle(b)}</p>
@@ -102,6 +114,6 @@ export function Bookings() {
         })}
         {q.data.items.length === 0 && <p className="text-slate-500">{t('booking:noBookings')}</p>}
       </div>
-    </div>
+    </AuroraPageHeader>
   );
 }

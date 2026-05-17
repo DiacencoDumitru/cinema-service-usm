@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
+import { AuroraPageHeader } from '../components/AuroraPageHeader';
 import type { Profile } from '../types';
 
 type Form = { name: string; birthDate: string };
@@ -67,10 +68,13 @@ export function Profile() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <h1 className="text-2xl font-bold">{t('auth:profileTitle')}</h1>
-      <p className="text-slate-400">{q.data.email}</p>
-      <form className="space-y-4" onSubmit={handleSubmit((v) => mut.mutate(v))}>
+    <AuroraPageHeader title={t('auth:profileTitle')} lead={t('auth:profileLead')} maxWidth="lg">
+      <div className="relative space-y-6">
+        <p className="text-sm text-slate-400">{q.data.email}</p>
+        <form
+          className="space-y-4 rounded-xl border border-slate-800/80 bg-slate-900/50 p-5"
+          onSubmit={handleSubmit((v) => mut.mutate(v))}
+        >
         <div>
           <label className="mb-1 block text-sm text-slate-400">{t('common:name')}</label>
           <input className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" {...register('name')} />
@@ -91,7 +95,8 @@ export function Profile() {
         <button type="submit" className="rounded bg-rose-600 px-4 py-2 text-white hover:bg-rose-500">
           {t('common:save')}
         </button>
-      </form>
-    </div>
+        </form>
+      </div>
+    </AuroraPageHeader>
   );
 }

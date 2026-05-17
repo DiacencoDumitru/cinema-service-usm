@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { api } from '../api/client';
+import { AuroraPageHeader } from '../components/AuroraPageHeader';
 import { FetchBanner, QueryErrorRetry } from '../components/FetchBanner';
 import { useAppLocale } from '../hooks/useAppLocale';
 import { useMovieDisplayTitle } from '../hooks/useMovieDisplayTitle';
@@ -99,9 +100,8 @@ export function Schedule() {
   });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{t('schedule:title')}</h1>
-
+    <AuroraPageHeader title={t('schedule:title')} lead={t('schedule:lead')} maxWidth="6xl">
+      <div className="relative space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <span
           className="rounded-full border border-emerald-600/80 bg-emerald-900/40 px-4 py-2 text-sm font-semibold text-emerald-100"
@@ -303,6 +303,7 @@ export function Schedule() {
         </aside>
       </div>
       )}
-    </div>
+      </div>
+    </AuroraPageHeader>
   );
 }

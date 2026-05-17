@@ -1,5 +1,6 @@
 {
   "myTicketsTitle": "Biletele mele",
+  "myTicketsLead": "Rezervările și biletele electronice.",
   "loadBookingsFailed": "Nu am putut încărca rezervările.",
   "cancelSuccess": "Rezervare anulată",
   "cancelFailed": "Anularea a eșuat",
