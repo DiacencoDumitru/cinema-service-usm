@@ -1,5 +1,6 @@
 {
   "myTicketsTitle": "My tickets",
+  "myTicketsLead": "Your bookings and e-tickets.",
   "loadBookingsFailed": "Could not load bookings.",
   "cancelSuccess": "Booking cancelled",
   "cancelFailed": "Cancellation failed",
