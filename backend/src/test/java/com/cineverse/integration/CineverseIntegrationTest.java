@@ -5,6 +5,7 @@ import com.cineverse.auth.dto.RegisterRequest;
 import com.cineverse.auth.dto.TokenResponse;
 import com.cineverse.booking.dto.BookingDetailResponse;
 import com.cineverse.booking.dto.BookingPaidResponse;
+import com.cineverse.booking.dto.SeatLockResponse;
 import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
 import com.cineverse.common.ErrorResponse;
@@ -151,12 +152,14 @@ class CineverseIntegrationTest {
                 screeningId,
                 List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
         );
-        ResponseEntity<Void> lockRes = restTemplate.exchange(
+        ResponseEntity<SeatLockResponse> lockRes = restTemplate.exchange(
                 baseUrl() + "/api/bookings/lock",
                 HttpMethod.POST,
                 new HttpEntity<>(lockReq, bearer(token)),
-                Void.class);
+                SeatLockResponse.class);
         assertThat(lockRes.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(lockRes.getBody()).isNotNull();
+        assertThat(lockRes.getBody().expiresAt()).isNotNull();
 
         ResponseEntity<BookingPaidResponse> payRes = restTemplate.exchange(
                 baseUrl() + "/api/bookings",
@@ -217,11 +220,11 @@ class CineverseIntegrationTest {
                 screeningId,
                 List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
         );
-        ResponseEntity<Void> first = restTemplate.exchange(
+        ResponseEntity<SeatLockResponse> first = restTemplate.exchange(
                 baseUrl() + "/api/bookings/lock",
                 HttpMethod.POST,
                 new HttpEntity<>(req, bearer(token1)),
-                Void.class);
+                SeatLockResponse.class);
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ResponseEntity<ErrorResponse> second = restTemplate.exchange(

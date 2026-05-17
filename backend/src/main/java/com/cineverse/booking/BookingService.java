@@ -14,6 +14,7 @@ import com.cineverse.booking.dto.BookingPaidResponse;
 import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatLineResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
+import com.cineverse.booking.dto.SeatLockResponse;
 import com.cineverse.price.PriceCategory;
 import com.cineverse.price.PriceRuleRepository;
 import com.cineverse.screening.Screening;
@@ -70,7 +71,7 @@ public class BookingService {
         this.birthdayDiscountService = birthdayDiscountService;
     }
 
-    public void lockSeats(Long userId, BookingSeatSelectionRequest request) {
+    public SeatLockResponse lockSeats(Long userId, BookingSeatSelectionRequest request) {
         Screening screening = screeningRepository.findByIdWithMovieAndHall(request.screeningId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Screening not found"));
         List<Long> seatIds = extractSeatIds(request);
@@ -80,6 +81,7 @@ public class BookingService {
         if (!seatLockService.tryAcquireAll(request.screeningId(), userId, seatIds, ttl)) {
             throw new ApiException(HttpStatus.CONFLICT, "One or more seats are not available");
         }
+        return new SeatLockResponse(Instant.now().plusSeconds(ttl), ttl);
     }
 
     @Transactional
