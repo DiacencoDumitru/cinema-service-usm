@@ -150,7 +150,8 @@ class CineverseIntegrationTest {
 
         BookingSeatSelectionRequest lockReq = new BookingSeatSelectionRequest(
                 screeningId,
-                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
+                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD)),
+                null
         );
         ResponseEntity<SeatLockResponse> lockRes = restTemplate.exchange(
                 baseUrl() + "/api/bookings/lock",
@@ -184,7 +185,8 @@ class CineverseIntegrationTest {
 
         BookingSeatSelectionRequest req = new BookingSeatSelectionRequest(
                 screeningId,
-                List.of(new BookingSeatItemRequest(seatId, PriceCategory.CHILD))
+                List.of(new BookingSeatItemRequest(seatId, PriceCategory.CHILD)),
+                null
         );
         BookingPaidResponse paid = checkoutAndConfirm(token, req);
         assertThat(paid.seats()).hasSize(1);
@@ -200,7 +202,8 @@ class CineverseIntegrationTest {
 
         BookingSeatSelectionRequest req = new BookingSeatSelectionRequest(
                 screeningId,
-                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
+                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD)),
+                null
         );
         ResponseEntity<SeatLockResponse> first = restTemplate.exchange(
                 baseUrl() + "/api/bookings/lock",
@@ -248,7 +251,8 @@ class CineverseIntegrationTest {
 
         BookingSeatSelectionRequest req = new BookingSeatSelectionRequest(
                 screeningId,
-                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
+                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD)),
+                null
         );
         BookingPaidResponse paid = checkoutAndConfirm(token, req);
         assertThat(paid.discountPercent()).isEqualTo(30);
@@ -293,7 +297,8 @@ class CineverseIntegrationTest {
 
         BookingSeatSelectionRequest req = new BookingSeatSelectionRequest(
                 screeningId,
-                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
+                List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD)),
+                null
         );
         BookingPaidResponse paid = checkoutAndConfirm(token, req);
         Long bookingId = paid.bookingId();
