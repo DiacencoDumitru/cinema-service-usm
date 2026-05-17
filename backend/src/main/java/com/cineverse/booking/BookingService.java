@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -85,6 +86,9 @@ public class BookingService {
         validateSeatSelection(screening, seatIds);
         validatePriceCategories(request);
         long ttl = cineverseProperties.getSeatLockTtlSeconds();
+        if (seatLockService.locksHeldByUser(request.screeningId(), userId, seatIds)) {
+            return new SeatLockResponse(Instant.now().plusSeconds(ttl), ttl);
+        }
         if (!seatLockService.tryAcquireAll(request.screeningId(), userId, seatIds, ttl)) {
             throw new ApiException(HttpStatus.CONFLICT, "One or more seats are not available");
         }
@@ -201,12 +205,17 @@ public class BookingService {
                         bs.getSeat().getSeatType().name(),
                         bs.getPrice()))
                 .collect(Collectors.toList());
-        BigDecimal subtotal = lines.stream()
+        BigDecimal linesTotal = lines.stream()
                 .map(BookingSeatLineResponse::price)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         User user = booking.getUser();
         boolean discountEligible = birthdayDiscountService.isEligible(user.getBirthDate(), screening.getStartsAt());
         int discountPercent = discountEligible ? birthdayDiscountService.getPercent() : 0;
+        BigDecimal subtotal = linesTotal;
+        if (discountEligible && discountPercent > 0) {
+            subtotal = linesTotal.multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(100 - discountPercent), 2, RoundingMode.HALF_UP);
+        }
         BigDecimal discountAmount = subtotal.subtract(total).max(BigDecimal.ZERO);
         return toPaidResponse(booking, screening, subtotal, discountPercent, discountAmount, total, lines);
     }
@@ -397,7 +406,7 @@ public class BookingService {
         if (unique.size() != seatIds.size()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Duplicate seats");
         }
-        List<Seat> seats = seatRepository.findByIdIn(seatIds);
+        List<Seat> seats = seatRepository.findByIdInWithHall(seatIds);
         if (seats.size() != seatIds.size()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid seat id");
         }

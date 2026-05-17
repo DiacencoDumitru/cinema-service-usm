@@ -162,7 +162,7 @@ class CineverseIntegrationTest {
         assertThat(lockRes.getBody()).isNotNull();
         assertThat(lockRes.getBody().expiresAt()).isNotNull();
 
-        BookingPaidResponse paid = checkoutAndConfirm(token, lockReq);
+        BookingPaidResponse paid = checkoutAndConfirm(token, lockReq, false);
         assertThat(paid.bookingId()).isNotNull();
         assertThat(paid.bookingCode()).startsWith("AC");
         assertThat(paid.totalPrice()).isGreaterThan(BigDecimal.ZERO);
@@ -379,12 +379,18 @@ class CineverseIntegrationTest {
     }
 
     private BookingPaidResponse checkoutAndConfirm(String token, BookingSeatSelectionRequest req) {
-        ResponseEntity<SeatLockResponse> lockRes = restTemplate.exchange(
-                baseUrl() + "/api/bookings/lock",
-                HttpMethod.POST,
-                new HttpEntity<>(req, bearer(token)),
-                SeatLockResponse.class);
-        assertThat(lockRes.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return checkoutAndConfirm(token, req, true);
+    }
+
+    private BookingPaidResponse checkoutAndConfirm(String token, BookingSeatSelectionRequest req, boolean acquireLock) {
+        if (acquireLock) {
+            ResponseEntity<SeatLockResponse> lockRes = restTemplate.exchange(
+                    baseUrl() + "/api/bookings/lock",
+                    HttpMethod.POST,
+                    new HttpEntity<>(req, bearer(token)),
+                    SeatLockResponse.class);
+            assertThat(lockRes.getStatusCode()).isEqualTo(HttpStatus.OK);
+        }
 
         ResponseEntity<BookingPaidResponse> pending = restTemplate.exchange(
                 baseUrl() + "/api/bookings",

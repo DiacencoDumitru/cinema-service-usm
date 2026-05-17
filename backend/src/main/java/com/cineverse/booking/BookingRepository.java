@@ -43,7 +43,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             Pageable pageable
     );
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.screening s JOIN FETCH s.movie JOIN FETCH s.hall JOIN FETCH b.user WHERE b.id = :id")
+    @EntityGraph(attributePaths = {"seats", "seats.seat", "screening", "screening.movie", "screening.hall", "user"})
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
     Optional<Booking> findByIdWithDetails(@Param("id") Long id);
 
     @EntityGraph(attributePaths = {"seats", "seats.seat", "screening", "screening.movie", "screening.hall"})
