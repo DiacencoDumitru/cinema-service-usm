@@ -13,6 +13,9 @@ public class CineverseProperties {
     private List<String> corsAllowedOrigins = new ArrayList<>(List.of("http://localhost:5173"));
     private long cacheTtlSeconds = 120;
     private long seatLockTtlSeconds = 600;
+    private boolean mailEnabled;
+    private String mailFrom = "aurora@cineverse.local";
+    private String publicFrontendUrl = "http://localhost:5173";
     private BirthdayDiscount birthdayDiscount = new BirthdayDiscount();
 
     public List<String> getCorsAllowedOrigins() {
@@ -48,6 +51,30 @@ public class CineverseProperties {
 
     public void setSeatLockTtlSeconds(long seatLockTtlSeconds) {
         this.seatLockTtlSeconds = seatLockTtlSeconds;
+    }
+
+    public boolean isMailEnabled() {
+        return mailEnabled;
+    }
+
+    public void setMailEnabled(boolean mailEnabled) {
+        this.mailEnabled = mailEnabled;
+    }
+
+    public String getMailFrom() {
+        return mailFrom;
+    }
+
+    public void setMailFrom(String mailFrom) {
+        this.mailFrom = mailFrom;
+    }
+
+    public String getPublicFrontendUrl() {
+        return publicFrontendUrl;
+    }
+
+    public void setPublicFrontendUrl(String publicFrontendUrl) {
+        this.publicFrontendUrl = publicFrontendUrl;
     }
 
     public BirthdayDiscount getBirthdayDiscount() {
