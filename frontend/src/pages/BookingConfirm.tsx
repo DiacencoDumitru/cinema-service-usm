@@ -40,10 +40,10 @@ export function BookingConfirm() {
       );
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success(t('booking:paySuccess'));
       reset();
-      nav('/bilete');
+      nav(`/bilete/${data.bookingId}`);
     },
     onError: () => toast.error(t('booking:payFailed')),
   });

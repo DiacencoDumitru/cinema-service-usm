@@ -12,6 +12,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Profile } from './pages/Profile';
 import { Bookings } from './pages/Bookings';
+import { BookingTicket } from './pages/BookingTicket';
 import { SeatSelection } from './pages/SeatSelection';
 import { BookingConfirm } from './pages/BookingConfirm';
 import { Admin } from './pages/Admin';
@@ -42,6 +43,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Bookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="bilete/:id"
+            element={
+              <ProtectedRoute>
+                <BookingTicket />
               </ProtectedRoute>
             }
           />

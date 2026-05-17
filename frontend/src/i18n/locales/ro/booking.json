@@ -56,5 +56,10 @@
   "payFailed": "Plată eșuată",
   "redirecting": "Redirecționare…",
   "lockCountdown": "Locurile sunt rezervate încă {{time}}",
-  "lockExpired": "Rezervarea locurilor a expirat. Alege din nou."
+  "lockExpired": "Rezervarea locurilor a expirat. Alege din nou.",
+  "ticketTitle": "Bilet electronic",
+  "ticketLoadFailed": "Nu s-a putut încărca biletul.",
+  "backToTickets": "← Biletele mele",
+  "bookingCode": "Cod rezervare",
+  "viewTicket": "Vezi biletul (QR)"
 }
