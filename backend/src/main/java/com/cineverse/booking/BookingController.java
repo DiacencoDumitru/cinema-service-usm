@@ -3,6 +3,7 @@ package com.cineverse.booking;
 import com.cineverse.auth.UserPrincipal;
 import com.cineverse.booking.dto.BookingPaidResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
+import com.cineverse.booking.dto.SeatLockResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,9 +23,9 @@ public class BookingController {
     }
 
     @PostMapping("/lock")
-    public void lock(@AuthenticationPrincipal UserPrincipal principal,
-                     @Valid @RequestBody BookingSeatSelectionRequest request) {
-        bookingService.lockSeats(principal.getUserId(), request);
+    public SeatLockResponse lock(@AuthenticationPrincipal UserPrincipal principal,
+                                 @Valid @RequestBody BookingSeatSelectionRequest request) {
+        return bookingService.lockSeats(principal.getUserId(), request);
     }
 
     @PostMapping

@@ -71,6 +71,11 @@ export interface Profile {
   birthDate: string | null;
 }
 
+export interface SeatLockInfo {
+  expiresAt: string;
+  ttlSeconds: number;
+}
+
 export interface BookingHistory {
   bookingId: number;
   movieTitle: string;
