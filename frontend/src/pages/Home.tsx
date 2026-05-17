@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -6,24 +7,28 @@ import { FetchBanner } from '../components/FetchBanner';
 import type { CursorPage, Movie } from '../types';
 import { MovieCarousel } from '../components/MovieCarousel';
 import { VideoStage } from '../components/VideoStage';
+import { MovieSearchBar } from '../components/MovieSearchBar';
 import { sortNowShowingMovies } from '../utils/nowShowingOrder';
 
-async function fetchMovies(status: string) {
-  const { data } = await api.get<CursorPage<Movie>>(`/api/movies`, { params: { status, limit: 12 } });
+async function fetchMovies(status: string, q: string) {
+  const params: Record<string, string | number> = { status, limit: 12 };
+  if (q.trim()) params.q = q.trim();
+  const { data } = await api.get<CursorPage<Movie>>(`/api/movies`, { params });
   return data;
 }
 
 export function Home() {
   const { t } = useTranslation('home');
+  const [search, setSearch] = useState('');
   const now = useQuery({
-    queryKey: ['movies', 'NOW_SHOWING'],
-    queryFn: () => fetchMovies('NOW_SHOWING'),
+    queryKey: ['movies', 'NOW_SHOWING', search],
+    queryFn: () => fetchMovies('NOW_SHOWING', search),
     retry: 1,
     staleTime: 30_000,
   });
   const soon = useQuery({
-    queryKey: ['movies', 'COMING_SOON'],
-    queryFn: () => fetchMovies('COMING_SOON'),
+    queryKey: ['movies', 'COMING_SOON', search],
+    queryFn: () => fetchMovies('COMING_SOON', search),
     retry: 1,
     staleTime: 30_000,
   });
@@ -34,6 +39,7 @@ export function Home() {
 
   return (
     <div className="space-y-12">
+      <MovieSearchBar value={search} onChange={setSearch} />
       {now.isPending && <FetchBanner tone="load">{t('nowShowingLoad')}</FetchBanner>}
       {now.isError && (
         <FetchBanner tone="err">

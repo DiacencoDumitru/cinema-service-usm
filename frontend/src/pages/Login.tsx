@@ -55,6 +55,11 @@ export function Login() {
           {t('auth:submitLogin')}
         </button>
       </form>
+      <p className="mt-2 text-center text-sm">
+        <Link className="text-rose-400" to="/forgot-password">
+          {t('auth:forgotLink')}
+        </Link>
+      </p>
       <p className="mt-4 text-center text-sm text-slate-400">
         {t('auth:noAccount')}{' '}
         <Link className="text-rose-400" to="/register">

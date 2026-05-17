@@ -15,6 +15,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     boolean existsByScreening_Id(Long screeningId);
 
+    boolean existsByBookingCode(String bookingCode);
+
     @EntityGraph(attributePaths = {"seats", "seats.seat", "screening", "screening.movie", "screening.hall"})
     @Query("""
             SELECT b FROM Booking b
@@ -43,6 +45,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.screening s JOIN FETCH s.movie JOIN FETCH s.hall JOIN FETCH b.user WHERE b.id = :id")
     Optional<Booking> findByIdWithDetails(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"seats", "seats.seat", "screening", "screening.movie", "screening.hall"})
+    @Query("SELECT b FROM Booking b WHERE b.id = :id AND b.user.id = :userId")
+    Optional<Booking> findByIdForUser(@Param("id") Long id, @Param("userId") Long userId);
 
     @Query("SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.status = :status AND b.createdAt >= :since")
     BigDecimal sumPaidRevenueSince(@Param("status") BookingStatus status, @Param("since") Instant since);

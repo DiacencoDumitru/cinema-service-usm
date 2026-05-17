@@ -21,9 +21,11 @@ export function resolveSeatPrice(
 export function bookingSeatsPayload(
   screeningId: number,
   seats: { seatId: number; priceCategory: TicketPriceCategory }[],
+  promoCode?: string,
 ) {
   return {
     screeningId,
     seats: seats.map((s) => ({ seatId: s.seatId, priceCategory: s.priceCategory })),
+    ...(promoCode?.trim() ? { promoCode: promoCode.trim().toUpperCase() } : {}),
   };
 }

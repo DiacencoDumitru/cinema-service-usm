@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { api } from '../api/client';
+import { LockCountdownBanner } from '../components/LockCountdownBanner';
 import { useBookingDraftStore } from '../stores/bookingDraftStore';
 import type { BookingPaid } from '../types';
 import { categoryLabel } from '../utils/labels';
@@ -21,6 +22,7 @@ export function BookingConfirm() {
   const draft = useBookingDraftStore();
   const reset = useBookingDraftStore((s) => s.reset);
   const selectedSeats = useBookingDraftStore((s) => s.selectedSeats);
+  const [promoCode, setPromoCode] = useState('');
   const subtotal = selectedSeats.reduce((sum, s) => sum + s.basePrice, 0);
   const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
   const discountAmount = subtotal - total;
@@ -33,16 +35,19 @@ export function BookingConfirm() {
 
   const pay = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post<BookingPaid>(
+      const { data: pending } = await api.post<BookingPaid>(
         '/api/bookings',
-        bookingSeatsPayload(screeningId, selectedSeats),
+        bookingSeatsPayload(screeningId, selectedSeats, promoCode),
       );
-      return data;
+      const { data: paid } = await api.post<BookingPaid>(
+        `/api/bookings/${pending.bookingId}/confirm-payment`,
+      );
+      return paid;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success(t('booking:paySuccess'));
       reset();
-      nav('/bilete');
+      nav(`/bilete/${data.bookingId}`);
     },
     onError: () => toast.error(t('booking:payFailed')),
   });
@@ -53,6 +58,7 @@ export function BookingConfirm() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
+      <LockCountdownBanner />
       <h1 className="text-2xl font-bold">{t('booking:confirmOrder')}</h1>
       <div className="rounded-lg border border-slate-800 bg-slate-900 p-4 text-sm">
         <p>
@@ -93,6 +99,15 @@ export function BookingConfirm() {
           </div>
         </div>
       </div>
+      <label className="block text-sm text-slate-400">
+        {t('booking:promoCode')}
+        <input
+          value={promoCode}
+          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+          className="mt-1 w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-white"
+          placeholder="WELCOME10"
+        />
+      </label>
       <button
         type="button"
         disabled={pay.isPending}

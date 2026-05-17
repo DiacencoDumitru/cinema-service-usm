@@ -52,7 +52,15 @@
   "subtotal": "Подытог:",
   "birthdayDiscountLine": "Скидка в день рождения:",
   "paySimulated": "Оплатить (симуляция)",
+  "promoCode": "Промокод (необязательно)",
   "paySuccess": "Оплата симулирована — билет выдан!",
   "payFailed": "Оплата не удалась",
-  "redirecting": "Перенаправление…"
+  "redirecting": "Перенаправление…",
+  "lockCountdown": "Места удерживаются ещё {{time}}",
+  "lockExpired": "Время удержания истекло. Выберите места снова.",
+  "ticketTitle": "Электронный билет",
+  "ticketLoadFailed": "Не удалось загрузить билет.",
+  "backToTickets": "← Мои билеты",
+  "bookingCode": "Код брони",
+  "viewTicket": "Открыть билет (QR)"
 }

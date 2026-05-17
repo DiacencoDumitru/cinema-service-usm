@@ -33,9 +33,10 @@ public class MovieController {
     @GetMapping
     public CursorPage<MovieResponse> list(@RequestParam(required = false) MovieStatus status,
                                           @RequestParam(required = false) String genres,
+                                          @RequestParam(required = false) String q,
                                           @RequestParam(required = false) String cursor,
                                           @RequestParam(defaultValue = "20") int limit) throws Exception {
-        return movieService.list(status, genres, cursor, limit);
+        return movieService.list(status, genres, q, cursor, limit);
     }
 
     @GetMapping("/{id}")

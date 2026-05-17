@@ -9,5 +9,6 @@
   "carouselComingSoon": "СКОРО",
   "noMovies": "Нет фильмов.",
   "carouselPrev": "Назад",
-  "carouselNext": "Вперёд"
+  "carouselNext": "Вперёд",
+  "searchPlaceholder": "Поиск фильма…"
 }

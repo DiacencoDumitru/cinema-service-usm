@@ -6,6 +6,7 @@ import java.util.List;
 
 public record BookingPaidResponse(
         Long bookingId,
+        String bookingCode,
         String movieTitle,
         String originalTitle,
         String titleRu,
