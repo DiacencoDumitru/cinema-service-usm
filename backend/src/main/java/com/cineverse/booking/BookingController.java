@@ -28,9 +28,15 @@ public class BookingController {
     }
 
     @PostMapping
-    public BookingPaidResponse pay(@AuthenticationPrincipal UserPrincipal principal,
-                                   @Valid @RequestBody BookingSeatSelectionRequest request) {
-        return bookingService.pay(principal.getUserId(), request);
+    public BookingPaidResponse checkout(@AuthenticationPrincipal UserPrincipal principal,
+                                        @Valid @RequestBody BookingSeatSelectionRequest request) {
+        return bookingService.createPendingBooking(principal.getUserId(), request);
+    }
+
+    @PostMapping("/{id}/confirm-payment")
+    public BookingPaidResponse confirmPayment(@AuthenticationPrincipal UserPrincipal principal,
+                                              @PathVariable Long id) {
+        return bookingService.confirmPayment(principal.getUserId(), id);
     }
 
     @PostMapping("/{id}/cancel")

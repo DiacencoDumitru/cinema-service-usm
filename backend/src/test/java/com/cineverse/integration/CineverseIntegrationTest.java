@@ -150,22 +150,9 @@ class CineverseIntegrationTest {
                 screeningId,
                 List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
         );
-        ResponseEntity<Void> lockRes = restTemplate.exchange(
-                baseUrl() + "/api/bookings/lock",
-                HttpMethod.POST,
-                new HttpEntity<>(lockReq, bearer(token)),
-                Void.class);
-        assertThat(lockRes.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<BookingPaidResponse> payRes = restTemplate.exchange(
-                baseUrl() + "/api/bookings",
-                HttpMethod.POST,
-                new HttpEntity<>(lockReq, bearer(token)),
-                BookingPaidResponse.class);
-        assertThat(payRes.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(payRes.getBody()).isNotNull();
-        assertThat(payRes.getBody().bookingId()).isNotNull();
-        assertThat(payRes.getBody().totalPrice()).isGreaterThan(BigDecimal.ZERO);
+        BookingPaidResponse paid = checkoutAndConfirm(token, lockReq);
+        assertThat(paid.bookingId()).isNotNull();
+        assertThat(paid.totalPrice()).isGreaterThan(BigDecimal.ZERO);
     }
 
     @Test
@@ -178,21 +165,9 @@ class CineverseIntegrationTest {
                 screeningId,
                 List.of(new BookingSeatItemRequest(seatId, PriceCategory.CHILD))
         );
-        restTemplate.exchange(
-                baseUrl() + "/api/bookings/lock",
-                HttpMethod.POST,
-                new HttpEntity<>(req, bearer(token)),
-                Void.class);
-
-        ResponseEntity<BookingPaidResponse> payRes = restTemplate.exchange(
-                baseUrl() + "/api/bookings",
-                HttpMethod.POST,
-                new HttpEntity<>(req, bearer(token)),
-                BookingPaidResponse.class);
-        assertThat(payRes.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(payRes.getBody()).isNotNull();
-        assertThat(payRes.getBody().seats()).hasSize(1);
-        assertThat(payRes.getBody().seats().get(0).price()).isEqualByComparingTo(new BigDecimal("60.00"));
+        BookingPaidResponse paid = checkoutAndConfirm(token, req);
+        assertThat(paid.seats()).hasSize(1);
+        assertThat(paid.seats().get(0).price()).isEqualByComparingTo(new BigDecimal("60.00"));
     }
 
     @Test
@@ -254,21 +229,9 @@ class CineverseIntegrationTest {
                 screeningId,
                 List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
         );
-        restTemplate.exchange(
-                baseUrl() + "/api/bookings/lock",
-                HttpMethod.POST,
-                new HttpEntity<>(req, bearer(token)),
-                Void.class);
-
-        ResponseEntity<BookingPaidResponse> payRes = restTemplate.exchange(
-                baseUrl() + "/api/bookings",
-                HttpMethod.POST,
-                new HttpEntity<>(req, bearer(token)),
-                BookingPaidResponse.class);
-        assertThat(payRes.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(payRes.getBody()).isNotNull();
-        assertThat(payRes.getBody().discountPercent()).isEqualTo(30);
-        assertThat(payRes.getBody().discountAmount()).isGreaterThan(BigDecimal.ZERO);
+        BookingPaidResponse paid = checkoutAndConfirm(token, req);
+        assertThat(paid.discountPercent()).isEqualTo(30);
+        assertThat(paid.discountAmount()).isGreaterThan(BigDecimal.ZERO);
     }
 
     @Test
@@ -311,17 +274,8 @@ class CineverseIntegrationTest {
                 screeningId,
                 List.of(new BookingSeatItemRequest(seatId, PriceCategory.STANDARD))
         );
-        restTemplate.exchange(
-                baseUrl() + "/api/bookings/lock",
-                HttpMethod.POST,
-                new HttpEntity<>(req, bearer(token)),
-                Void.class);
-        ResponseEntity<BookingPaidResponse> payRes = restTemplate.exchange(
-                baseUrl() + "/api/bookings",
-                HttpMethod.POST,
-                new HttpEntity<>(req, bearer(token)),
-                BookingPaidResponse.class);
-        Long bookingId = payRes.getBody().bookingId();
+        BookingPaidResponse paid = checkoutAndConfirm(token, req);
+        Long bookingId = paid.bookingId();
 
         ResponseEntity<Void> cancelRes = restTemplate.exchange(
                 baseUrl() + "/api/bookings/" + bookingId + "/cancel",
@@ -396,6 +350,31 @@ class CineverseIntegrationTest {
                 .findFirst()
                 .orElseThrow()
                 .seatId();
+    }
+
+    private BookingPaidResponse checkoutAndConfirm(String token, BookingSeatSelectionRequest req) {
+        ResponseEntity<Void> lockRes = restTemplate.exchange(
+                baseUrl() + "/api/bookings/lock",
+                HttpMethod.POST,
+                new HttpEntity<>(req, bearer(token)),
+                Void.class);
+        assertThat(lockRes.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<BookingPaidResponse> pending = restTemplate.exchange(
+                baseUrl() + "/api/bookings",
+                HttpMethod.POST,
+                new HttpEntity<>(req, bearer(token)),
+                BookingPaidResponse.class);
+        assertThat(pending.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(pending.getBody()).isNotNull();
+
+        ResponseEntity<BookingPaidResponse> confirmed = restTemplate.exchange(
+                baseUrl() + "/api/bookings/" + pending.getBody().bookingId() + "/confirm-payment",
+                HttpMethod.POST,
+                new HttpEntity<>(null, bearer(token)),
+                BookingPaidResponse.class);
+        assertThat(confirmed.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return confirmed.getBody();
     }
 
     private HttpHeaders bearer(String token) {
