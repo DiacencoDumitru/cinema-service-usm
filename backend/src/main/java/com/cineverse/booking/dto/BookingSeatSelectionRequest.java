@@ -8,6 +8,7 @@ import java.util.List;
 
 public record BookingSeatSelectionRequest(
         @NotNull Long screeningId,
-        @NotEmpty List<@Valid BookingSeatItemRequest> seats
+        @NotEmpty List<@Valid BookingSeatItemRequest> seats,
+        String promoCode
 ) {
 }

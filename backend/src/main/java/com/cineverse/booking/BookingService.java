@@ -13,6 +13,7 @@ import com.cineverse.booking.dto.BookingPaidResponse;
 import com.cineverse.booking.dto.BookingSeatItemRequest;
 import com.cineverse.booking.dto.BookingSeatLineResponse;
 import com.cineverse.booking.dto.BookingSeatSelectionRequest;
+import com.cineverse.promo.PromoCodeService;
 import com.cineverse.price.PriceCategory;
 import com.cineverse.price.PriceRuleRepository;
 import com.cineverse.screening.Screening;
@@ -48,6 +49,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final CineverseProperties cineverseProperties;
     private final BirthdayDiscountService birthdayDiscountService;
+    private final PromoCodeService promoCodeService;
 
     public BookingService(BookingRepository bookingRepository,
                           BookingSeatRepository bookingSeatRepository,
@@ -57,7 +59,8 @@ public class BookingService {
                           PriceRuleRepository priceRuleRepository,
                           UserRepository userRepository,
                           CineverseProperties cineverseProperties,
-                          BirthdayDiscountService birthdayDiscountService) {
+                          BirthdayDiscountService birthdayDiscountService,
+                          PromoCodeService promoCodeService) {
         this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
         this.screeningRepository = screeningRepository;
@@ -67,6 +70,7 @@ public class BookingService {
         this.userRepository = userRepository;
         this.cineverseProperties = cineverseProperties;
         this.birthdayDiscountService = birthdayDiscountService;
+        this.promoCodeService = promoCodeService;
     }
 
     public void lockSeats(Long userId, BookingSeatSelectionRequest request) {
@@ -119,6 +123,13 @@ public class BookingService {
             total = total.add(applied);
             lines.add(new BookingSeatLineResponse(seat.getRowNum(), seat.getColNum(), seat.getSeatType().name(), applied));
         }
+        int promoPercent = promoCodeService.resolveDiscountPercent(request.promoCode());
+        BigDecimal promoAmount = BigDecimal.ZERO;
+        if (promoPercent > 0) {
+            promoAmount = total.multiply(BigDecimal.valueOf(promoPercent))
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            total = total.subtract(promoAmount);
+        }
         BigDecimal discountAmount = subtotal.subtract(total);
 
         Booking booking = new Booking();
@@ -126,7 +137,14 @@ public class BookingService {
         booking.setScreening(screening);
         booking.setTotalPrice(total);
         booking.setStatus(BookingStatus.PAID);
+        if (request.promoCode() != null && !request.promoCode().isBlank()) {
+            booking.setPromoCode(request.promoCode().trim().toUpperCase());
+        }
         bookingRepository.saveAndFlush(booking);
+
+        if (booking.getPromoCode() != null) {
+            promoCodeService.consume(booking.getPromoCode());
+        }
 
         for (int i = 0; i < seats.size(); i++) {
             Seat seat = seats.get(i);

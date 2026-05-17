@@ -52,6 +52,7 @@
   "subtotal": "Subtotal:",
   "birthdayDiscountLine": "Reducere zi de naștere:",
   "paySimulated": "Plătește (simulare)",
+  "promoCode": "Cod promoțional (opțional)",
   "paySuccess": "Plată simulată — bilet emis!",
   "payFailed": "Plată eșuată",
   "redirecting": "Redirecționare…"
